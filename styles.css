@@ -1,8 +1,11 @@
 /*Master-styles*/
+html,
 body {
   margin: 0px;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  display: block;
 }
 .container {
   display: grid;
@@ -94,4 +97,9 @@ body {
 canvas {
   border: 1px solid black;
   background-color: chocolate;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
 }

@@ -32,6 +32,10 @@ class Apparatus {
     this.dialLines = dialLines;
     this.LargedialLines = LargedialLines;
     this.power = false;
+    this.sock_r_x = 0;
+    this.sock_r_y = 0;
+    this.sock_b_x = 0;
+    this.sock_b_y = 0;
   }
 
   static getRotateCordinates(x, y, rot_angle, rot_radius) {
@@ -173,23 +177,29 @@ class Apparatus {
   }
 
   DrawSockets() {
-    var x = this.x + 15;
-    var y = this.y + this.height - 15;
+    var r_x_space = 15;
+    var r_y_space = 15;
+    var b_x_space = 100;
+    this.sock_r_x = this.x + r_x_space;
+    this.sock_r_y = this.y + this.height - r_y_space;
+    this.sock_b_x = this.sock_r_x + b_x_space;
+    this.sock_b_y = this.sock_r_y;
+
     var radius = 5;
     c.strokeStyle = "red";
     c.lineWidth = 5;
     c.beginPath();
-    c.arc(x, y, radius, 0 * Math.PI, 2 * Math.PI, true);
+    c.arc(this.sock_r_x, this.sock_r_y, radius, 0 * Math.PI, 2 * Math.PI, true);
     c.stroke();
-    x = x + 25;
+
     c.beginPath();
     c.strokeStyle = "black";
-    c.arc(x, y, radius, 0 * Math.PI, 2 * Math.PI, true);
+    c.arc(this.sock_b_x, this.sock_b_y, radius, 0 * Math.PI, 2 * Math.PI, true);
     c.stroke();
   }
 
   DrawExtraBlackSocket() {
-    var x = this.x + 80;
+    var x = this.x + 220;
     var y = this.y + this.height - 15;
     var radius = 5;
     c.strokeStyle = "black";
@@ -279,9 +289,9 @@ class Apparatus {
     c.beginPath();
     var x_text = this.c_x - 10;
     var y_text = this.c_y + 20;
-    console.log(
-      `x_text is ${x_text}, y_text is ${y_text}, r_text is ${dial_text}`
-    );
+    //console.log(
+    //  `x_text is ${x_text}, y_text is ${y_text}, r_text is ${dial_text}`
+    //);
     c.fillStyle = "black";
     c.font = "18px Arial bold";
     c.fillText(dial_text, x_text, y_text);
@@ -289,14 +299,15 @@ class Apparatus {
 }
 
 class Step {
-  constructor(x, y, width, height) {
+  constructor(x, y, width, height, score) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
+    this.score = 0;
+    this.l_step_event = "";
   }
   DrawStep(score, text) {
-    score = score + 1;
     //console.log(this.text);
     c.beginPath();
     c.fillStyle = "#48AAAD";
@@ -320,14 +331,14 @@ function logEvent(e) {
   event = e || window.event;
   var x = event.clientX;
   var y = event.clientY;
-  console.log("mouse clicked: x is: " + x + "y is: " + y);
-  console.log(
-    "windows width: " +
-      window.innerWidth +
-      "windows height: " +
-      window.innerWidth
-  );
-  console.log(`battery x co-ordinate: ${battery.x}`);
+  //console.log("mouse clicked: x is: " + x + "y is: " + y);
+  //console.log(
+  //  "windows width: " +
+  //    window.innerWidth +
+  //    "windows height: " +
+  //    window.innerWidth
+  //);
+  //console.log(`battery x co-ordinate: ${battery.x}`);
   if (x > 20 && x < 35 && y > 35 && y < 60) {
     if (battery.power) {
       battery.DrawPowerOFF();
@@ -337,35 +348,118 @@ function logEvent(e) {
   }
 }
 
-canvas.addEventListener("mousedown", logEvent);
+canvas.addEventListener("mousedown", (md_e) => {
+  x = md_e.offsetX;
+  y = md_e.offsetY;
+  var space = 10;
+  console.log(`mouse down event: x=${x} and y=${y}`);
+  batt_r_x_min = battery.sock_r_x - space;
+  batt_r_x_max = battery.sock_r_x + space;
+  batt_r_y_min = battery.sock_r_y - space;
+  batt_r_y_max = battery.sock_r_y + space;
+
+  batt_b_x_min = battery.sock_b_x - space;
+  batt_b_x_max = battery.sock_b_x + space;
+  batt_b_y_min = battery.sock_b_y - space;
+  batt_b_y_max = battery.sock_b_y + space;
+
+  amm_r_x_min = ammeter.sock_r_x - space;
+  amm_r_x_max = ammeter.sock_r_x + space;
+  amm_r_y_min = ammeter.sock_r_y - space;
+  amm_r_y_max = ammeter.sock_r_y + space;
+
+  amm_b_x_min = ammeter.sock_b_x - space;
+  amm_b_x_max = ammeter.sock_b_x + space;
+  amm_b_y_min = ammeter.sock_b_y - space;
+  amm_b_y_max = ammeter.sock_b_y + space;
+
+  console.log(
+    `b_x_min=${batt_r_x_min}, b_x_max=${batt_r_x_max}, b_y_min=${batt_r_y_min}, b_y_max=${batt_r_y_max}`
+  );
+  console.log(
+    `amm_x_min=${amm_r_x_min}, amm_x_max=${amm_r_x_max}, amm_y_min=${amm_r_y_min}, _ammy_max=${amm_r_y_max}`
+  );
+  switch (true) {
+    case x > batt_r_x_min &&
+      x < batt_r_x_max &&
+      y > batt_r_y_min &&
+      y < batt_r_y_max:
+      console.log("clicked on battery positive");
+      if (!battery.RedSocket) {
+        battery.RedSocket = true;
+      } else if (
+        battery.RedSocket &&
+        ammeter.RedSocket &&
+        !battery.RedSocketVerification
+      ) {
+        battery.RedSocketVerification = true;
+        step1.score = step1.score + 1;
+      }
+      step1.l_step_event = "battery_r";
+      break;
+    case x > amm_r_x_min &&
+      x < amm_r_x_max &&
+      y > amm_r_y_min &&
+      y < amm_r_y_max:
+      console.log("clicked on ammeter positive");
+      console.log(
+        `${ammeter.RedSocket} ${battery.RedSocket} ${battery.RedSocketVerification}`
+      );
+      if (!ammeter.RedSocket) {
+        ammeter.RedSocket = true;
+      }
+      if (
+        ammeter.RedSocket &&
+        battery.RedSocket &&
+        !battery.RedSocketVerification &&
+        step1.l_step_event == "battery_r"
+      ) {
+        battery.RedSocketVerification = true;
+        step1.score = step1.score + 1;
+      }
+  }
+  console.log(`score: ${step1.score}`);
+});
+
 const battery = new Apparatus(10, 10, 250, 150, 150, 85, 40, 5);
 battery.DrawOuterRect();
 battery.DrawDial(true, ["OV", "5V", "10V", "15V", "20V"]);
 battery.DrawKnob(45);
 battery.DrawSockets();
 battery.DrawPowerOFF();
-
+battery.RedSocket = false;
+battery.BlackSocket = false;
+battery.RedSocketVerification = false;
 const rheostat = new Apparatus(300, 10, 250, 150, 450, 85, 40, 5);
 rheostat.DrawOuterRect();
 rheostat.DrawDial(true, ["10Ω", "50Ω", "500Ω", "100KΩ", "20KΩ"]);
 rheostat.DrawKnob(0);
 rheostat.DrawSockets();
 rheostat.DrawExtraBlackSocket();
+rheostat.RedSocket = false;
+rheostat.BlackSocket = false;
+rheostat.RedSocketVerification = false;
 
 const voltmeter = new Apparatus(300, 200, 220, 200, 410, 300, 50, 26, 6);
 voltmeter.DrawOuterRect();
 voltmeter.DrawDial(false);
-voltmeter.DrawDialLarge(["5V", "10V", "15V", "20V", "25V", "30V", "V"]);
+voltmeter.DrawDialLarge(["0V", "5V", "10V", "15V", "20V", "25V", "V"]);
 //voltmeter.DrawKnob(0);
 voltmeter.DrawSockets();
 voltmeter.DrawPointers(45, "V");
+voltmeter.RedSocket = false;
+voltmeter.BlackSocket = false;
+voltmeter.RedSocketVerification = false;
 
-const ammeter = new Apparatus(40, 200, 220, 200, 150, 300, 40, 51, 6);
+const ammeter = new Apparatus(40, 200, 220, 200, 150, 300, 40, 26, 6);
 ammeter.DrawOuterRect();
 ammeter.DrawDial(false);
-ammeter.DrawDialLarge(["100", "200", "300", "400", "500", "600", "mA"]);
+ammeter.DrawDialLarge(["0", "20", "40", "60", "80", "100", "mA"]);
 ammeter.DrawSockets();
 ammeter.DrawPointers(120, "mA");
+ammeter.RedSocket = false;
+ammeter.BlackSocket = false;
+ammeter.RedSocketVerification = false;
 
 const step1 = new Step(10, 500, 900, 100);
 var step_text =

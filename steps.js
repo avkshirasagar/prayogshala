@@ -36,6 +36,7 @@ class Apparatus {
     this.sock_r_y = 0;
     this.sock_b_x = 0;
     this.sock_b_y = 0;
+    this.isRheostat = false;
   }
 
   static getRotateCordinates(x, y, rot_angle, rot_radius) {
@@ -54,6 +55,21 @@ class Apparatus {
     c.lineWidth = 2;
     c.fillRect(this.x, this.y, this.width, this.height);
     c.strokeRect(this.x, this.y, this.width, this.height);
+  }
+
+  DrawResistor() {
+    c.beginPath();
+    c.strokeStyle = "#565051";
+    c.lineWidth = this.height;
+    c.moveTo(this.x, this.y);
+    c.lineTo(this.x + this.width, this.y);
+    c.stroke();
+    c.beginPath();
+    c.arc(this.x, this.y, 5, 0 * Math.PI, 2 * Math.PI, true);
+    c.stroke();
+    c.beginPath();
+    c.arc(this.x + this.width, this.y, 5, 0 * Math.PI, 2 * Math.PI, true);
+    c.stroke();
   }
 
   DrawDial(IsDrawText, r_text) {
@@ -176,37 +192,92 @@ class Apparatus {
     c.fill();
   }
 
-  DrawSockets() {
-    var r_x_space = 15;
-    var r_y_space = 15;
-    var b_x_space = 100;
-    this.sock_r_x = this.x + r_x_space;
-    this.sock_r_y = this.y + this.height - r_y_space;
-    this.sock_b_x = this.sock_r_x + b_x_space;
-    this.sock_b_y = this.sock_r_y;
-
+  DrawSockets(isRheostat) {
     var radius = 5;
-    c.strokeStyle = "red";
     c.lineWidth = 5;
-    c.beginPath();
-    c.arc(this.sock_r_x, this.sock_r_y, radius, 0 * Math.PI, 2 * Math.PI, true);
-    c.stroke();
+    this.isRheostat = isRheostat;
+    if (this.isRheostat) {
+      console.log(`Inside DrawSockets:isRheostat: ${isRheostat}`);
+      var b1_x_space = 15;
+      var r_x_space = 110;
+      var b2_x_space = 105;
+      var r_y_space = 15;
+      this.sock_b1_x = this.x + b1_x_space;
+      this.sock_r_x = this.sock_b1_x + r_x_space;
+      this.sock_b2_x = this.sock_r_x + b2_x_space;
+      this.sock_r_y = this.y + this.height - r_y_space;
+      this.sock_b1_y = this.sock_r_y;
+      this.sock_b2_y = this.sock_r_y;
 
-    c.beginPath();
-    c.strokeStyle = "black";
-    c.arc(this.sock_b_x, this.sock_b_y, radius, 0 * Math.PI, 2 * Math.PI, true);
-    c.stroke();
-  }
+      c.strokeStyle = "black";
+      c.beginPath();
+      c.arc(
+        this.sock_b1_x,
+        this.sock_b1_y,
+        radius,
+        0 * Math.PI,
+        2 * Math.PI,
+        true
+      );
+      c.stroke();
 
-  DrawExtraBlackSocket() {
-    var x = this.x + 220;
-    var y = this.y + this.height - 15;
-    var radius = 5;
-    c.strokeStyle = "black";
-    c.lineWidth = 5;
-    c.beginPath();
-    c.arc(x, y, radius, 0 * Math.PI, 2 * Math.PI, true);
-    c.stroke();
+      c.strokeStyle = "red";
+      c.beginPath();
+      c.arc(
+        this.sock_r_x,
+        this.sock_r_y,
+        radius,
+        0 * Math.PI,
+        2 * Math.PI,
+        true
+      );
+      c.stroke();
+
+      c.strokeStyle = "black";
+      c.beginPath();
+      c.arc(
+        this.sock_b2_x,
+        this.sock_b2_y,
+        radius,
+        0 * Math.PI,
+        2 * Math.PI,
+        true
+      );
+      c.stroke();
+    } else {
+      console.log(`Inside DrawSockets:isRheostat else: ${isRheostat}`);
+      var r_x_space = 15;
+      var r_y_space = 15;
+      var b_x_space = 100;
+      this.sock_r_x = this.x + r_x_space;
+      this.sock_r_y = this.y + this.height - r_y_space;
+      this.sock_b_x = this.sock_r_x + b_x_space;
+      this.sock_b_y = this.sock_r_y;
+
+      c.strokeStyle = "red";
+      c.beginPath();
+      c.arc(
+        this.sock_r_x,
+        this.sock_r_y,
+        radius,
+        0 * Math.PI,
+        2 * Math.PI,
+        true
+      );
+      c.stroke();
+
+      c.beginPath();
+      c.strokeStyle = "black";
+      c.arc(
+        this.sock_b_x,
+        this.sock_b_y,
+        radius,
+        0 * Math.PI,
+        2 * Math.PI,
+        true
+      );
+      c.stroke();
+    }
   }
 
   DrawPowerOFF() {
@@ -306,9 +377,12 @@ class Step {
     this.height = height;
     this.score = 0;
     this.l_step_event = "";
+    this.c_step_event = "";
+    this.score = score;
   }
-  DrawStep(score, text) {
+  DrawStep(text) {
     //console.log(this.text);
+    console.log(text);
     c.beginPath();
     c.fillStyle = "#48AAAD";
     c.strokeStyle = "black";
@@ -322,9 +396,82 @@ class Step {
   DrawCircuit() {
     const image = new Image();
     image.onload = function () {
-      c.drawImage(image, 600, 100);
+      c.drawImage(image, 600, 200);
     };
     image.src = "images/circuit-diagram.png";
+  }
+  DrawGreatJob() {
+    const image = new Image();
+    image.onload = function () {
+      c.drawImage(image, 600, 55);
+    };
+    image.src = "images/james_bond.gif";
+  }
+  DrawScore() {
+    c.beginPath();
+    c.fillStyle = "#48AAAD";
+    c.strokeStyle = "black";
+    c.fillRect(750, 10, 100, 50);
+    var score_text = "SCORE:" + this.score;
+    c.beginPath();
+    c.font = "18px Comic Sans MS";
+    c.fillStyle = "red";
+    c.fillText(score_text, 757, 40);
+  }
+  DrawConnection(connection) {
+    c.strokeStyle = "green";
+    if (connection == "batteryRed") {
+      c.beginPath();
+      c.strokeStyle = "green";
+      c.moveTo(battery.sock_r_x, battery.sock_r_y);
+      c.lineTo(battery.sock_r_x, ammeter.sock_r_y);
+      c.lineTo(ammeter.sock_r_x, ammeter.sock_r_y);
+      c.stroke();
+    }
+    if (connection == "batteryBlack") {
+      console.log("drawConnection for battery black");
+      console.log(`${battery.sock_b_x} ${battery.sock_b_y}`);
+      c.beginPath();
+      c.moveTo(battery.sock_b_x, battery.sock_b_y);
+      c.lineTo(battery.sock_b_x, battery.sock_b_y + 30);
+      c.lineTo(rheostat.sock_b1_x, rheostat.sock_b1_y + 30);
+      c.lineTo(rheostat.sock_b1_x, rheostat.sock_b1_y);
+      c.stroke();
+    }
+    if (connection == "rheostatRed") {
+      console.log("drawConnection for rheostat red");
+      c.beginPath();
+      c.moveTo(rheostat.sock_r_x, rheostat.sock_r_y);
+      c.lineTo(rheostat.sock_r_x, battery.sock_b_y + 30);
+      c.lineTo(rheostat.sock_b2_x, rheostat.sock_b2_y + 30);
+      c.lineTo(rheostat.sock_b2_x, rheostat.sock_b2_y + 270);
+      c.lineTo(voltmeter.sock_b_x, rheostat.sock_b2_y + 270);
+      c.lineTo(voltmeter.sock_b_x, voltmeter.sock_b_y);
+      c.stroke();
+    }
+    if (connection == "voltmeterRed") {
+      console.log("drawConnection for voltmeter red");
+      c.beginPath();
+      c.moveTo(voltmeter.sock_r_x, voltmeter.sock_r_y);
+      c.lineTo(voltmeter.sock_r_x, voltmeter.sock_r_y + 30);
+      c.lineTo(ammeter.sock_b_x, ammeter.sock_b_y + 30);
+      c.lineTo(ammeter.sock_b_x, ammeter.sock_b_y);
+      c.stroke();
+    }
+    if (connection == "resistorT1") {
+      console.log("drawConnection for resistor t1");
+      c.beginPath();
+      c.moveTo(voltmeter.sock_r_x, voltmeter.sock_r_y);
+      c.lineTo(resistor.x, resistor.y);
+      c.stroke();
+    }
+    if (connection == "resistorT2") {
+      console.log("drawConnection for resistor t2");
+      c.beginPath();
+      c.moveTo(voltmeter.sock_b_x, voltmeter.sock_b_y);
+      c.lineTo(resistor.x + resistor.width, resistor.y);
+      c.stroke();
+    }
   }
 }
 function logEvent(e) {
@@ -373,59 +520,189 @@ canvas.addEventListener("mousedown", (md_e) => {
   amm_b_y_min = ammeter.sock_b_y - space;
   amm_b_y_max = ammeter.sock_b_y + space;
 
-  console.log(
-    `b_x_min=${batt_r_x_min}, b_x_max=${batt_r_x_max}, b_y_min=${batt_r_y_min}, b_y_max=${batt_r_y_max}`
-  );
-  console.log(
-    `amm_x_min=${amm_r_x_min}, amm_x_max=${amm_r_x_max}, amm_y_min=${amm_r_y_min}, _ammy_max=${amm_r_y_max}`
-  );
+  rh_r_x_min = rheostat.sock_r_x - space;
+  rh_r_x_max = rheostat.sock_r_x + space;
+  rh_r_y_min = rheostat.sock_r_y - space;
+  rh_r_y_max = rheostat.sock_r_y + space;
+
+  rh_b1_x_min = rheostat.sock_b1_x - space;
+  rh_b1_x_max = rheostat.sock_b1_x + space;
+  rh_b1_y_min = rheostat.sock_b1_y - space;
+  rh_b1_y_max = rheostat.sock_b1_y + space;
+
+  rh_b2_x_min = rheostat.sock_b2_x - space;
+  rh_b2_x_max = rheostat.sock_b2_x + space;
+  rh_b2_y_min = rheostat.sock_b2_y - space;
+  rh_b2_y_max = rheostat.sock_b2_y + space;
+
+  v_r_x_min = voltmeter.sock_r_x - space;
+  v_r_x_max = voltmeter.sock_r_x + space;
+  v_r_y_min = voltmeter.sock_r_y - space;
+  v_r_y_max = voltmeter.sock_r_y + space;
+
+  v_b_x_min = voltmeter.sock_b_x - space;
+  v_b_x_max = voltmeter.sock_b_x + space;
+  v_b_y_min = voltmeter.sock_b_y - space;
+  v_b_y_max = voltmeter.sock_b_y + space;
+
+  resistor_t1_x_min = resistor.x - space;
+  resistor_t1_x_max = resistor.x + space;
+  resistor_t1_y_min = resistor.y - space;
+  resistor_t1_y_max = resistor.y + space;
+  resistor_t2_x_min = resistor.x + resistor.width - space;
+  resistor_t2_x_max = resistor.x + resistor.width + space;
+  resistor_t2_y_min = resistor.y - space;
+  resistor_t2_y_max = resistor.y + space;
+
+  step1.l_step_event = step1.c_step_event;
   switch (true) {
     case x > batt_r_x_min &&
       x < batt_r_x_max &&
       y > batt_r_y_min &&
       y < batt_r_y_max:
       console.log("clicked on battery positive");
-      if (!battery.RedSocket) {
-        battery.RedSocket = true;
-      } else if (
-        battery.RedSocket &&
-        ammeter.RedSocket &&
-        !battery.RedSocketVerification
-      ) {
-        battery.RedSocketVerification = true;
-        step1.score = step1.score + 1;
-      }
-      step1.l_step_event = "battery_r";
+      step1.c_step_event = "battery_r";
+      break;
+    case x > batt_b_x_min &&
+      x < batt_b_x_max &&
+      y > batt_b_y_min &&
+      y < batt_b_y_max:
+      console.log("clicked on battery negative");
+      step1.c_step_event = "battery_b";
       break;
     case x > amm_r_x_min &&
       x < amm_r_x_max &&
       y > amm_r_y_min &&
       y < amm_r_y_max:
       console.log("clicked on ammeter positive");
-      console.log(
-        `${ammeter.RedSocket} ${battery.RedSocket} ${battery.RedSocketVerification}`
-      );
-      if (!ammeter.RedSocket) {
-        ammeter.RedSocket = true;
-      }
-      if (
-        ammeter.RedSocket &&
-        battery.RedSocket &&
-        !battery.RedSocketVerification &&
-        step1.l_step_event == "battery_r"
-      ) {
-        battery.RedSocketVerification = true;
-        step1.score = step1.score + 1;
-      }
+      step1.c_step_event = "ammter_r";
+      break;
+    case x > amm_b_x_min &&
+      x < amm_b_x_max &&
+      y > amm_b_y_min &&
+      y < amm_b_y_max:
+      console.log("clicked on ammeter negative");
+      step1.c_step_event = "ammter_b";
+      break;
+    case x > rh_r_x_min && x < rh_r_x_max && y > rh_r_y_min && y < rh_r_y_max:
+      step1.c_step_event = "rheostat_r";
+      console.log("clicked fixed of rheostat");
+      break;
+    case x > rh_b1_x_min &&
+      x < rh_b1_x_max &&
+      y > rh_b1_y_min &&
+      y < rh_b1_y_max:
+      step1.c_step_event = "rheostat_b1";
+      console.log("clicked b1 fixed of rheostat");
+      break;
+    case x > rh_b2_x_min &&
+      x < rh_b2_x_max &&
+      y > rh_b2_y_min &&
+      y < rh_b2_y_max:
+      step1.c_step_event = "rheostat_b2";
+      console.log("clicked b2 fixed of rheostat");
+      break;
+    case x > v_r_x_min && x < v_r_x_max && y > v_r_y_min && y < v_r_y_max:
+      step1.c_step_event = "voltmeter_r";
+      console.log("clicked r of voltmeter");
+      break;
+    case x > v_b_x_min && x < v_b_x_max && y > v_b_y_min && y < v_b_y_max:
+      step1.c_step_event = "voltmeter_b";
+      console.log("clicked b of voltmeter");
+      break;
+    case x > resistor_t1_x_min &&
+      x < resistor_t1_x_max &&
+      y > resistor_t1_y_min &&
+      y < resistor_t1_y_max:
+      step1.c_step_event = "resistor_t1";
+      console.log("clicked resistor t1");
+      break;
+    case x > resistor_t2_x_min &&
+      x < resistor_t2_x_max &&
+      y > resistor_t2_y_min &&
+      y < resistor_t2_y_max:
+      step1.c_step_event = "resistor_t2";
+      console.log("clicked resistor t2");
+      break;
+  }
+  console.log(
+    `l_step_event=${step1.l_step_event} \n c_step_event=${step1.c_step_event}`
+  );
+  console.log(`redsocketverfication=${battery.RedSocketVerification}`);
+
+  if (
+    !battery.RedSocketVerification &&
+    ((step1.l_step_event == "battery_r" && step1.c_step_event == "ammter_r") ||
+      (step1.l_step_event == "ammter_r" && step1.c_step_event == "battery_r"))
+  ) {
+    step1.score = step1.score + 1;
+    battery.RedSocketVerification = true;
+    step1.DrawConnection("batteryRed");
+  } else if (
+    !rheostat.bSocketVerification &&
+    ((step1.l_step_event == "battery_b" &&
+      step1.c_step_event == "rheostat_b1") ||
+      (step1.l_step_event == "rheostat_b1" &&
+        step12.c_step_event == "battery_b"))
+  ) {
+    step1.score = step1.score + 1;
+    rheostat.bSocketVerification = true;
+    step1.DrawConnection("batteryBlack");
+  } else if (
+    !rheostat.rSocketVerification &&
+    ((step1.l_step_event == "voltmeter_b" &&
+      step1.c_step_event == "rheostat_r") ||
+      (step1.l_step_event == "rheostat_r" &&
+        step1.c_step_event == "voltmeter_b"))
+  ) {
+    step1.score = step1.score + 1;
+    rheostat.rSocketVerification = true;
+    step1.DrawConnection("rheostatRed");
+  } else if (
+    !voltmeter.rSocketVerification &&
+    ((step1.l_step_event == "voltmeter_r" &&
+      step1.c_step_event == "ammter_b") ||
+      (step1.l_step_event == "ammter_b" && step1.c_step_event == "voltmeter_r"))
+  ) {
+    step1.score = step1.score + 1;
+    voltmeter.rSocketVerification = true;
+    step1.DrawConnection("voltmeterRed");
+  } else if (
+    !resistor.rSocketVerification &&
+    ((step1.l_step_event == "voltmeter_r" &&
+      step1.c_step_event == "resistor_t1") ||
+      (step1.l_step_event == "resistor_t1" &&
+        step1.c_step_event == "voltmeter_r"))
+  ) {
+    console.log("resistor t1 connection detected");
+    step1.score = step1.score + 1;
+    resistor.rSocketVerification = true;
+    step1.DrawConnection("resistorT1");
+  } else if (
+    !resistor.bSocketVerification &&
+    ((step1.l_step_event == "voltmeter_b" &&
+      step1.c_step_event == "resistor_t2") ||
+      (step1.l_step_event == "resistor_t2" &&
+        step1.c_step_event == "voltmeter_b"))
+  ) {
+    step1.score = step1.score + 1;
+    resistor.bSocketVerification = true;
+    step1.DrawConnection("resistorT2");
   }
   console.log(`score: ${step1.score}`);
+  step1.DrawScore();
+  if (step1.score == 6) {
+    step1.DrawStep("Completed 1st step: click on next");
+  }
+
+  //step1.DrawGreatJob();
 });
 
 const battery = new Apparatus(10, 10, 250, 150, 150, 85, 40, 5);
 battery.DrawOuterRect();
 battery.DrawDial(true, ["OV", "5V", "10V", "15V", "20V"]);
 battery.DrawKnob(45);
-battery.DrawSockets();
+battery.DrawSockets(false);
 battery.DrawPowerOFF();
 battery.RedSocket = false;
 battery.BlackSocket = false;
@@ -434,8 +711,7 @@ const rheostat = new Apparatus(300, 10, 250, 150, 450, 85, 40, 5);
 rheostat.DrawOuterRect();
 rheostat.DrawDial(true, ["10Ω", "50Ω", "500Ω", "100KΩ", "20KΩ"]);
 rheostat.DrawKnob(0);
-rheostat.DrawSockets();
-rheostat.DrawExtraBlackSocket();
+rheostat.DrawSockets(true);
 rheostat.RedSocket = false;
 rheostat.BlackSocket = false;
 rheostat.RedSocketVerification = false;
@@ -445,25 +721,29 @@ voltmeter.DrawOuterRect();
 voltmeter.DrawDial(false);
 voltmeter.DrawDialLarge(["0V", "5V", "10V", "15V", "20V", "25V", "V"]);
 //voltmeter.DrawKnob(0);
-voltmeter.DrawSockets();
+voltmeter.DrawSockets(false);
 voltmeter.DrawPointers(45, "V");
 voltmeter.RedSocket = false;
 voltmeter.BlackSocket = false;
 voltmeter.RedSocketVerification = false;
 
+const resistor = new Apparatus(320, 450, 100, 5);
+resistor.DrawResistor();
+
 const ammeter = new Apparatus(40, 200, 220, 200, 150, 300, 40, 26, 6);
 ammeter.DrawOuterRect();
 ammeter.DrawDial(false);
 ammeter.DrawDialLarge(["0", "20", "40", "60", "80", "100", "mA"]);
-ammeter.DrawSockets();
+ammeter.DrawSockets(false);
 ammeter.DrawPointers(120, "mA");
 ammeter.RedSocket = false;
 ammeter.BlackSocket = false;
 ammeter.RedSocketVerification = false;
 
-const step1 = new Step(10, 500, 900, 100);
+const step1 = new Step(10, 600, 900, 100, 0);
 var step_text =
   "Step 1: Connect the apparatus as shown in the circuit diagram.";
 //console.log(step_text);
-step1.DrawStep(0, step_text);
 step1.DrawCircuit();
+step1.DrawScore();
+step1.DrawStep(step_text);

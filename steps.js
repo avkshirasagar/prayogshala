@@ -4,7 +4,7 @@ var c = canvas.getContext("2d");
 c.canvas.width = window.innerWidth;
 c.canvas.height = window.innerHeight;
 
-var step_count = 1;
+var step_count = 3;
 //Methods and properties common to all apparatus
 class Apparatus {
   constructor(
@@ -38,6 +38,16 @@ class Apparatus {
     this.sock_b_x = 0;
     this.sock_b_y = 0;
     this.isRheostat = false;
+    this.RheostatAngles = [0, 45, 90, 135, 180];
+    this.voltmeter_init_angle = 7;
+    this.ammter_init_angle = 0;
+    this.VoltmeterAngles = { 0: 145, 45: 124, 90: 48, 135: 33, 180: 25 };
+    this.AmmterAngles = { 0: 170, 45: 145, 90: 56, 135: 30, 180: 22 };
+    this.battery_switch_x_min = 20;
+    this.battery_switch_x_max = 35;
+    this.battery_switch_y_min = 35;
+    this.battery_switch_y_max = 60;
+    this.rheostat_angle = 0;
   }
 
   static getRotateCordinates(x, y, rot_angle, rot_radius) {
@@ -148,10 +158,10 @@ class Apparatus {
       var x_text = this.c_x - Math.cos((angle * Math.PI) / 180) * radius_text;
       var y_text = this.c_y - Math.sin((angle * Math.PI) / 180) * radius_text;
       if (angle <= 90) {
-        x_text = x_text - 18;
+        x_text = x_text;
         y_text = y_text + 5;
       } else if (angle > 90) {
-        x_text = x_text - 8;
+        x_text = x_text;
         y_text = y_text + 5;
       }
       //console.log("x_start: " + x_start);
@@ -167,11 +177,11 @@ class Apparatus {
       angle = angle + DialLineAngleDiff;
     }
   }
-  DrawKnob(angle) {
+  DrawKnob() {
     var knob_cords = Apparatus.getRotateCordinates(
       this.c_x,
       this.c_y,
-      angle,
+      this.rheostat_angle,
       this.radius3
     );
     //dimensions of outer rect for the knob. Will be used for clearing
@@ -179,12 +189,17 @@ class Apparatus {
     var rect_y = this.c_y - this.radius3;
     var rect_h = 2 * this.radius3;
     var rect_w = 2 * this.radius3;
-    //console.log(`knob: ${knob_cords[0]} , ${knob_cords[1]}`);
+
+    this.rh_knob_x_min = rect_x;
+    this.rh_knob_x_max = rect_x + rect_w;
+    this.rh_knob_y_min = rect_y;
+    this.rh_knob_y_max = rect_y + rect_h;
     c.beginPath();
     c.fillStyle = "white";
-    c.fillRect(rect_x, rect_y, rect_w, rect_h);
     c.strokeStyle = "black";
     c.lineWidth = 10;
+    c.fillRect(rect_x, rect_y, rect_w, rect_h);
+
     c.moveTo(this.c_x, this.c_y);
     c.lineTo(knob_cords[0], knob_cords[1]);
     c.stroke();
@@ -194,14 +209,16 @@ class Apparatus {
   }
 
   DrawSockets(isRheostat) {
+    c.textAlign = "center";
+    c.textBaseline = "middle";
     var radius = 5;
     c.lineWidth = 5;
     this.isRheostat = isRheostat;
     if (this.isRheostat) {
       console.log(`Inside DrawSockets:isRheostat: ${isRheostat}`);
       var b1_x_space = 15;
-      var r_x_space = 110;
-      var b2_x_space = 105;
+      var r_x_space = 85;
+      var b2_x_space = 85;
       var r_y_space = 15;
       this.sock_b1_x = this.x + b1_x_space;
       this.sock_r_x = this.sock_b1_x + r_x_space;
@@ -224,7 +241,7 @@ class Apparatus {
       c.beginPath();
       c.font = "15px Arial";
       c.fillStyle = "black";
-      c.fillText("F", this.sock_b1_x - 5, this.sock_b1_y - 10);
+      c.fillText("F", this.sock_b1_x, this.sock_b1_y - 13);
       //c.stroke();
 
       c.strokeStyle = "red";
@@ -253,7 +270,7 @@ class Apparatus {
       c.beginPath();
       c.font = "15px Arial";
       c.fillStyle = "black";
-      c.fillText("F", this.sock_b2_x - 5, this.sock_b2_y - 10);
+      c.fillText("F", this.sock_b2_x, this.sock_b2_y - 13);
     } else {
       console.log(`Inside DrawSockets:isRheostat else: ${isRheostat}`);
       var r_x_space = 15;
@@ -278,7 +295,7 @@ class Apparatus {
       c.beginPath();
       c.font = "30px Arial";
       c.fillStyle = "black";
-      c.fillText("+", this.sock_r_x - 8, this.sock_r_y - 5);
+      c.fillText("+", this.sock_r_x, this.sock_r_y - 13);
 
       c.beginPath();
       c.strokeStyle = "black";
@@ -294,16 +311,19 @@ class Apparatus {
       c.beginPath();
       c.font = "30px Arial";
       c.fillStyle = "black";
-      c.fillText("-", this.sock_b_x - 5, this.sock_b_y - 4);
+      c.fillText("-", this.sock_b_x, this.sock_b_y - 12);
     }
   }
 
   DrawPowerOFF() {
-    //console.log("Inside drawPowerOFF");
+    console.log("Inside drawPowerOFF");
     c.beginPath();
     c.fillStyle = "white";
-    c.fillRect(20, 29, 15, 18);
     c.strokeStyle = "black";
+    c.lineWidth = 1;
+    c.fillRect(13, 13, 35, 80);
+    //c.fillRect(21, 29, 15, 18);
+    c.strokeRect(13, 13, 35, 80);
     c.lineWidth = 8;
     c.strokeRect(20, 40, 15, 15);
     c.fillStyle = "silver";
@@ -312,6 +332,8 @@ class Apparatus {
     c.strokeRect(25, 47, 5, 18);
     c.fillStyle = "black";
     c.font = "16px Arial";
+    c.textAlign = "left";
+    c.textBaseline = "middle";
     c.fillText("ON", 15, 28);
     c.fillText("OFF", 15, 80);
     //power LED
@@ -325,10 +347,11 @@ class Apparatus {
     this.power = false;
   }
   DrawPowerON() {
-    //console.log("Inside drawPowerOn");
+    console.log("Inside drawPowerOn");
     c.beginPath();
     c.fillStyle = "white";
-    c.fillRect(20, 40, 15, 26);
+    c.fillRect(13, 13, 35, 80);
+    //c.fillRect(20, 40, 15, 26);
     c.strokeStyle = "black";
     c.lineWidth = 8;
     c.strokeRect(20, 40, 15, 15);
@@ -338,6 +361,8 @@ class Apparatus {
     c.strokeRect(25, 33, 5, 18);
     c.fillStyle = "black";
     c.font = "16px Arial";
+    c.textAlign = "left";
+    c.textBaseline = "middle";
     c.fillText("ON", 15, 28);
     c.fillText("OFF", 15, 80);
     //power LED
@@ -350,13 +375,41 @@ class Apparatus {
     c.stroke();
     this.power = true;
   }
-  DrawPointers(p_angle, dial_text) {
+  DrawDialText(dial_text) {
+    c.beginPath();
+    var x_text = this.c_x - 10;
+    var y_text = this.c_y + 20;
+    //console.log(
+    //  `x_text is ${x_text}, y_text is ${y_text}, r_text is ${dial_text}`
+    //);
+    c.fillStyle = "black";
+    c.font = "18px Arial bold";
+    c.fillText(dial_text, x_text, y_text);
+  }
+  DrawPointers(apparatus) {
     //Clean previous pointer
+
     c.beginPath();
     c.fillStyle = "white";
     c.strokeStyle = "black";
     c.arc(this.c_x, this.c_y, this.radius_p, 0 * Math.PI, 2 * Math.PI, true);
     c.fill();
+    var p_angle = 0;
+
+    if (apparatus == "voltmeter") {
+      if (battery.power) {
+        p_angle = this.VoltmeterAngles[rheostat.rheostat_angle];
+      } else {
+        p_angle = 7;
+      }
+    } else if (apparatus == "ammter") {
+      if (battery.power) {
+        p_angle = this.AmmterAngles[rheostat.rheostat_angle];
+      } else {
+        p_angle = 0;
+      }
+    }
+    console.log(`pointers:p_angle=${p_angle}, battery=${battery.power}`);
     var pointer_cords = Apparatus.getRotateCordinates(
       this.c_x,
       this.c_y,
@@ -372,18 +425,6 @@ class Apparatus {
     c.moveTo(this.c_x, this.c_y);
     c.lineTo(pointer_cords[0], pointer_cords[1]);
     c.stroke();
-    c.beginPath();
-    c.arc(this.c_x, this.c_y, 5, 0 * Math.PI, 2 * Math.PI, true);
-    c.fill();
-    c.beginPath();
-    var x_text = this.c_x - 10;
-    var y_text = this.c_y + 20;
-    //console.log(
-    //  `x_text is ${x_text}, y_text is ${y_text}, r_text is ${dial_text}`
-    //);
-    c.fillStyle = "black";
-    c.font = "18px Arial bold";
-    c.fillText(dial_text, x_text, y_text);
   }
 }
 
@@ -444,6 +485,22 @@ class Step {
     this.t1y = t1y;
     this.t1w = t1w;
     this.t1h = t1h;
+    this.AmmterRangeVerificationDone = false;
+    this.VoltmeterRangeVerification = false;
+    this.AmmterLCVerification = false;
+    this.VoltmeterLCVerification = false;
+    this.AmmterZEVerification = false;
+    this.VoltmeterZEVerification = false;
+    this.Step3R1VerificationDone = false;
+    this.Step3R2VerificationDone = false;
+    this.Step3R3VerificationDone = false;
+    this.Step3R4VerificationDone = false;
+    this.Step3R5VerificationDone = false;
+    this.Step3ReadingCount = 0;
+    this.Step3rOptions = [
+      [18, 19, 20, 95.2, 100, 0.09, 199.5, 19, 5],
+      [(15, 16, 17, 0.8, 8, 80, 300, 500, 400, 200)],
+    ];
   }
   DrawStep(text) {
     //console.log(this.text);
@@ -503,8 +560,8 @@ class Step {
       c.beginPath();
       c.moveTo(rheostat.sock_r_x, rheostat.sock_r_y);
       c.lineTo(rheostat.sock_r_x, battery.sock_b_y + 30);
-      c.lineTo(rheostat.sock_b2_x, rheostat.sock_b2_y + 30);
-      c.lineTo(rheostat.sock_b2_x, rheostat.sock_b2_y + 270);
+      c.lineTo(rheostat.sock_b2_x + 45, rheostat.sock_b2_y + 30);
+      c.lineTo(rheostat.sock_b2_x + 45, rheostat.sock_b2_y + 270);
       c.lineTo(voltmeter.sock_b_x, rheostat.sock_b2_y + 270);
       c.lineTo(voltmeter.sock_b_x, voltmeter.sock_b_y);
       c.stroke();
@@ -533,6 +590,7 @@ class Step {
       c.stroke();
     }
   }
+
   DrawTable1() {
     //c.fillStyle = "#fc03ad";
     c.beginPath();
@@ -545,14 +603,14 @@ class Step {
     c.font = "20px Verdana";
 
     //c.fillRect(550, 200, 100, 50);
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 6; i++) {
       for (var j = 0; j < 3; j++) {
         if (i == 0) {
           c.fillStyle = "#fc03ad";
         } else {
           c.fillStyle = "white";
         }
-        console.log(`i=${i} j=${j} x=${x} y=${y} fillstyle=${c.fillStyle}`);
+        //console.log(`i=${i} j=${j} x=${x} y=${y} fillstyle=${c.fillStyle}`);
         c.fillRect(x, y, this.t1w, this.t1h);
         c.strokeRect(x, y, this.t1w, this.t1h);
         if (i == 0 && j == 1) {
@@ -587,6 +645,21 @@ class Step {
         }
         if (i == 1 && j == 1) {
           c.fillStyle = "#030bfc";
+          //Calculate the x_min and x_max of small rectangles which will be later used for verification
+          this.AmmRangeOption1_x_min = x;
+          this.AmmRangeOption1_x_max = x + this.t1w / 3;
+          this.AmmRangeOption1_y_min = y;
+          this.AmmRangeOption1_y_max = y + this.t1h;
+
+          this.AmmRangeOption2_x_min = x + this.t1w / 3;
+          this.AmmRangeOption2_x_max = x + (2 * this.t1w) / 3;
+          this.AmmRangeOption2_y_min = y;
+          this.AmmRangeOption2_y_max = y + this.t1h;
+          this.AmmRangeOption3_x_min = x + (2 * this.t1w) / 3;
+          this.AmmRangeOption3_x_max = x + this.t1w;
+          this.AmmRangeOption3_y_min = y;
+          this.AmmRangeOption3_y_max = y + this.t1h;
+
           c.fillRect(x, y, this.t1w / 3, this.t1h);
           c.strokeRect(x, y, this.t1w / 3, this.t1h);
           c.fillRect(x + this.t1w / 3, y, this.t1w / 3, this.t1h);
@@ -602,6 +675,21 @@ class Step {
         }
         if (i == 1 && j == 2) {
           c.fillStyle = "#030bfc";
+          this.VoltRangeOption1_x_min = x;
+          this.VoltRangeOption1_x_max = x + this.t1w / 3;
+          this.VoltRangeOption1_y_min = y;
+          this.VoltRangeOption1_y_max = y + this.t1h;
+
+          this.VoltRangeOption2_x_min = x + this.t1w / 3;
+          this.VoltRangeOption2_x_max = x + (2 * this.t1w) / 3;
+          this.VoltRangeOption2_y_min = y;
+          this.VoltRangeOption2_y_max = y + this.t1h;
+
+          this.VoltRangeOption3_x_min = x + (2 * this.t1w) / 3;
+          this.VoltRangeOption3_x_max = x + this.t1w;
+          this.VoltRangeOption3_y_min = y;
+          this.VoltRangeOption3_y_max = y + this.t1h;
+
           c.fillRect(x, y, this.t1w / 3, this.t1h);
           c.strokeRect(x, y, this.t1w / 3, this.t1h);
           c.fillRect(x + this.t1w / 3, y, this.t1w / 3, this.t1h);
@@ -617,6 +705,21 @@ class Step {
         }
         if (i == 2 && j == 1) {
           c.fillStyle = "#030bfc";
+          this.AmmLCOption1_x_min = x;
+          this.AmmLCOption1_x_max = x + this.t1w / 3;
+          this.AmmLCOption1_y_min = y;
+          this.AmmLCOption1_y_max = y + this.t1h;
+
+          this.AmmLCOption2_x_min = x + this.t1w / 3;
+          this.AmmLCOption2_x_max = x + (2 * this.t1w) / 3;
+          this.AmmLCOption2_y_min = y;
+          this.AmmLCOption2_y_max = y + this.t1h;
+
+          this.AmmLCOption3_x_min = x + (2 * this.t1w) / 3;
+          this.AmmLCOption3_x_max = x + this.t1w;
+          this.AmmLCOption3_y_min = y;
+          this.AmmLCOption3_y_max = y + this.t1h;
+
           c.fillRect(x, y, this.t1w / 3, this.t1h);
           c.strokeRect(x, y, this.t1w / 3, this.t1h);
           c.fillRect(x + this.t1w / 3, y, this.t1w / 3, this.t1h);
@@ -632,6 +735,20 @@ class Step {
         }
         if (i == 2 && j == 2) {
           c.fillStyle = "#030bfc";
+          this.VoltLCOption1_x_min = x;
+          this.VoltLCOption1_x_max = x + this.t1w / 3;
+          this.VoltLCOption1_y_min = y;
+          this.VoltLCOption1_y_max = y + this.t1h;
+
+          this.VoltLCOption2_x_min = x + this.t1w / 3;
+          this.VoltLCOption2_x_max = x + (2 * this.t1w) / 3;
+          this.VoltLCOption2_y_min = y;
+          this.VoltLCOption2_y_max = y + this.t1h;
+
+          this.VoltLCOption3_x_min = x + (2 * this.t1w) / 3;
+          this.VoltLCOption3_x_max = x + this.t1w;
+          this.VoltLCOption3_y_min = y;
+          this.VoltLCOption3_y_max = y + this.t1h;
           c.fillRect(x, y, this.t1w / 3, this.t1h);
           c.strokeRect(x, y, this.t1w / 3, this.t1h);
           c.fillRect(x + this.t1w / 3, y, this.t1w / 3, this.t1h);
@@ -647,6 +764,20 @@ class Step {
         }
         if (i == 3 && j == 1) {
           c.fillStyle = "#030bfc";
+          this.AmmZEOption1_x_min = x;
+          this.AmmZEOption1_x_max = x + this.t1w / 3;
+          this.AmmZEOption1_y_min = y;
+          this.AmmZEOption1_y_max = y + this.t1h;
+
+          this.AmmZEOption2_x_min = x + this.t1w / 3;
+          this.AmmZEOption2_x_max = x + (2 * this.t1w) / 3;
+          this.AmmZEOption2_y_min = y;
+          this.AmmZEOption2_y_max = y + this.t1h;
+
+          this.AmmZEOption3_x_min = x + (2 * this.t1w) / 3;
+          this.AmmZEOption3_x_max = x + this.t1w;
+          this.AmmZEOption3_y_min = y;
+          this.AmmZEOption3_y_max = y + this.t1h;
           c.fillRect(x, y, this.t1w / 3, this.t1h);
           c.strokeRect(x, y, this.t1w / 3, this.t1h);
           c.fillRect(x + this.t1w / 3, y, this.t1w / 3, this.t1h);
@@ -662,6 +793,20 @@ class Step {
         }
         if (i == 3 && j == 2) {
           c.fillStyle = "#030bfc";
+          this.VoltZEOption1_x_min = x;
+          this.VoltZEOption1_x_max = x + this.t1w / 3;
+          this.VoltZEOption1_y_min = y;
+          this.VoltZEOption1_y_max = y + this.t1h;
+
+          this.VoltZEOption2_x_min = x + this.t1w / 3;
+          this.VoltZEOption2_x_max = x + (2 * this.t1w) / 3;
+          this.VoltZEOption2_y_min = y;
+          this.VoltZEOption2_y_max = y + this.t1h;
+
+          this.VoltZEOption3_x_min = x + (2 * this.t1w) / 3;
+          this.VoltZEOption3_x_max = x + this.t1w;
+          this.VoltZEOption3_y_min = y;
+          this.VoltZEOption3_y_max = y + this.t1h;
           c.fillRect(x, y, this.t1w / 3, this.t1h);
           c.strokeRect(x, y, this.t1w / 3, this.t1h);
           c.fillRect(x + this.t1w / 3, y, this.t1w / 3, this.t1h);
@@ -691,25 +836,183 @@ class Step {
       y = y + this.t1h;
     }
   }
-}
-function logEvent(e) {
-  event = e || window.event;
-  var x = event.clientX;
-  var y = event.clientY;
-  //console.log("mouse clicked: x is: " + x + "y is: " + y);
-  //console.log(
-  //  "windows width: " +
-  //    window.innerWidth +
-  //    "windows height: " +
-  //    window.innerWidth
-  //);
-  //console.log(`battery x co-ordinate: ${battery.x}`);
-  if (x > 20 && x < 35 && y > 35 && y < 60) {
-    if (battery.power) {
-      battery.DrawPowerOFF();
-    } else {
-      battery.DrawPowerON();
+  DrawTableStep3Head() {
+    c.beginPath();
+    c.strokeStyle = "black";
+    c.lineWidth = "2px";
+    c.textAlign = "center";
+    c.textBaseline = "medium";
+    var x = step3.t1x;
+    var y = step3.t1y;
+    var w = step3.t1w;
+    var h = step3.t1h;
+    c.font = "15px Verdana";
+    c.fillStyle = "chocolate";
+    c.strokeStyle = "black";
+    c.fillRect(540, 200, 500, 400);
+    for (var i = 0; i < 3; i++) {
+      c.fillStyle = "#fc03ad";
+      c.beginPath();
+      c.fillRect(x, y, w, h);
+      c.strokeRect(x, y, w, h);
+      c.fillStyle = "black";
+      if (i == 0) {
+        c.fillText("Voltmeter(V)", x + w / 2, y + h / 2);
+      }
+      if (i == 1) {
+        c.fillText("Ammeter(mA)", x + w / 2, y + h / 2);
+      }
+      if (i == 2) {
+        c.fillText("R=V/I(Ω)", x + w / 2, y + h / 2);
+      }
+      x = x + w;
     }
+  }
+  DrawTableStep3() {
+    for (var i = 0; i < 1; i++) {
+      for (var j = 0; j < 3; j++) {
+        //console.log(`i=${i} j=${j} x=${x} y=${y} fillstyle=${c.fillStyle}`);
+        c.fillStyle = "#fc03ad";
+        c.fillRect(x, y, this.t1w, this.t1h);
+        c.strokeRect(x, y, this.t1w, this.t1h);
+        if (i == 0 && j == 0) {
+          //console.log("filling text");
+          c.fillStyle = "black";
+          c.fillText("Voltmeter(V)", x + this.t1w / 2, y + this.t1h / 2);
+        }
+        if (i == 0 && j == 1) {
+          //console.log("filling text");
+          c.fillStyle = "black";
+          c.fillText("Ammeter(mA)", x + this.t1w / 2, y + this.t1h / 2);
+        }
+        if (i == 0 && j == 2) {
+          //console.log("filling text");
+          c.fillStyle = "black";
+          c.fillText("R=V/I(Ω)", x + this.t1w / 2, y + this.t1h / 2);
+        }
+        x = x + this.t1w;
+      }
+      x = this.t1x;
+      y = y + this.t1h;
+    }
+  }
+  UpdateTable1(option) {
+    c.fillStyle = "green";
+    c.strokeStyle = "black";
+    var w = step2.t1w / 3;
+    var h = step2.t1h;
+    if (option == "AmmterRange") {
+      var x = step2.AmmRangeOption2_x_min;
+      var y = step2.AmmRangeOption2_y_min;
+      var w = step2.t1w / 3;
+      var h = step2.t1h;
+      var text = "100mA";
+    } else if (option == "VoltRange") {
+      var x = step2.VoltRangeOption2_x_min;
+      var y = step2.VoltRangeOption2_y_min;
+      var text = "25V";
+    } else if (option == "ammLC") {
+      var x = step2.AmmLCOption2_x_min;
+      var y = step2.AmmLCOption2_y_min;
+      var text = "4mA";
+    } else if (option == "VoltLC") {
+      var x = step2.VoltLCOption3_x_min;
+      var y = step2.VoltLCOption3_y_min;
+      var text = "1V";
+    } else if (option == "AmmZE") {
+      var x = step2.AmmZEOption1_x_min;
+      var y = step2.AmmZEOption1_y_min;
+      var text = "0mA";
+    } else if (option == "VoltZE") {
+      var x = step2.VoltZEOption2_x_min;
+      var y = step2.VoltZEOption2_y_min;
+      var text = "1V";
+    }
+
+    c.fillRect(x, y, w, h);
+    c.fillStyle = "white";
+    c.font = "12px Arial";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(text, x + w / 2, y + h / 2);
+  }
+  DrawTableStep3Options() {
+    c.beginPath();
+    c.strokeStyle = "black";
+    c.lineWidth = "2px";
+    c.textAlign = "center";
+    c.textBaseline = "medium";
+    c.fillStyle = "#030bfc";
+    var readArrayrow = this.Step3ReadingCount;
+    console.log(`array: first value:${this.Step3rOptions[readArrayrow][0]}`);
+    var x = this.t1x;
+    var y = this.t1y + this.t1h;
+    var w = this.t1w;
+    var h = this.t1h;
+
+    //Calculate the x_min and x_max of small rectangles which will be later used for verification
+    this.Op1_x_min = x;
+    this.Op1_x_max = x + w / 3;
+    this.Op1_y_min = y;
+    this.Op1_y_max = y + h;
+
+    this.Op2_x_min = x + w / 3;
+    this.Op2_x_max = x + (2 * w) / 3;
+    this.Op2_y_min = y;
+    this.Op2_y_max = y + h;
+
+    this.Op3_x_min = x + (2 * w) / 3;
+    this.Op3_x_max = x + w;
+    this.Op3_y_min = y;
+    this.Op3_y_max = y + h;
+    for (var i = 0; i < 9; i++) {
+      console.log(`x=${x}, y=${y}, w=${w}, h=${h}`);
+      c.fillStyle = "#030bfc";
+      c.fillRect(x, y, w / 3, h);
+      c.strokeRect(x, y, w / 3, h);
+      c.fillStyle = "white";
+      c.font = "12px Arial";
+      c.fillText(this.Step3rOptions[0][i], x + w / 6, y + h / 2);
+      x = x + w / 3;
+    }
+  }
+  UpdateTable2(option) {
+    c.fillStyle = "green";
+    c.strokeStyle = "black";
+    var w = step3.t1w / 3;
+    var h = step3.t1h;
+    if (step3.Step3ReadingCount == 0) {
+      var x = step3.Op2_x_min;
+      var y = step3.Op2_y_min;
+      var text = "19V";
+    } else if (option == "VoltRange") {
+      var x = step2.VoltRangeOption2_x_min;
+      var y = step2.VoltRangeOption2_y_min;
+      var text = "25V";
+    } else if (option == "ammLC") {
+      var x = step2.AmmLCOption2_x_min;
+      var y = step2.AmmLCOption2_y_min;
+      var text = "4mA";
+    } else if (option == "VoltLC") {
+      var x = step2.VoltLCOption3_x_min;
+      var y = step2.VoltLCOption3_y_min;
+      var text = "1V";
+    } else if (option == "AmmZE") {
+      var x = step2.AmmZEOption1_x_min;
+      var y = step2.AmmZEOption1_y_min;
+      var text = "0mA";
+    } else if (option == "VoltZE") {
+      var x = step2.VoltZEOption2_x_min;
+      var y = step2.VoltZEOption2_y_min;
+      var text = "1V";
+    }
+
+    c.fillRect(x, y, w, h);
+    c.fillStyle = "white";
+    c.font = "12px Arial";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(text, x + w / 2, y + h / 2);
   }
 }
 
@@ -918,11 +1221,16 @@ canvas.addEventListener("mousedown", (md_e) => {
       var step_text = [];
       step_text[0] =
         "Completed 1st step: click on the round button no. 2 to proceed to next step";
-      step1.DrawStep(step_text);
+      //step1.DrawStep(step_text);
     }
     ScoreStep1.DrawScore();
     ScoreStep2.DrawScore();
   } else if (step_count == 2) {
+    console.log(`step2: x=${x}, y=${y}`);
+    console.log(`step2: ammlc option2_x_min = ${step2.AmmLCOption2_x_min}`);
+    console.log(`step2: ammlc option2_x_max = ${step2.AmmLCOption2_x_max}`);
+    console.log(`step2: ammlc option2_y_min = ${step2.AmmLCOption2_y_min}`);
+    console.log(`step2: ammlc option2_y_max = ${step2.AmmLCOption2_y_max}`);
     if (
       x > ScoreStep2.cx - 40 &&
       x < ScoreStep2.cx + 40 &&
@@ -931,6 +1239,134 @@ canvas.addEventListener("mousedown", (md_e) => {
     ) {
       console.log("start step 2");
       procStep2();
+    } else if (
+      !step2.AmmterRangeVerificationDone &&
+      x > step2.AmmRangeOption2_x_min &&
+      x < step2.AmmRangeOption2_x_max &&
+      y > step2.AmmRangeOption2_y_min &&
+      y < step2.AmmRangeOption2_y_max
+    ) {
+      ScoreStep2.score = ScoreStep2.score + 1;
+      step2.AmmterRangeVerificationDone = true;
+      ScoreStep2.DrawScore();
+      step2.UpdateTable1("AmmterRange");
+    } else if (
+      !step2.VoltmeterRangeVerification &&
+      x > step2.VoltRangeOption2_x_min &&
+      x < step2.VoltRangeOption2_x_max &&
+      y > step2.VoltRangeOption2_y_min &&
+      y < step2.VoltRangeOption2_y_max
+    ) {
+      ScoreStep2.score = ScoreStep2.score + 1;
+      step2.VoltmeterRangeVerification = true;
+      ScoreStep2.DrawScore();
+      step2.UpdateTable1("VoltRange");
+    } else if (
+      !step2.AmmterLCVerification &&
+      x > step2.AmmLCOption2_x_min &&
+      x < step2.AmmLCOption2_x_max &&
+      y > step2.AmmLCOption2_y_min &&
+      y < step2.AmmLCOption2_y_max
+    ) {
+      console.log("ammter LC option selected is correct");
+      ScoreStep2.score = ScoreStep2.score + 1;
+      step2.AmmterLCVerification = true;
+      ScoreStep2.DrawScore();
+      step2.UpdateTable1("ammLC");
+    } else if (
+      !step2.VoltmeterLCVerification &&
+      x > step2.VoltLCOption3_x_min &&
+      x < step2.VoltLCOption3_x_max &&
+      y > step2.VoltLCOption3_y_min &&
+      y < step2.VoltLCOption3_y_max
+    ) {
+      ScoreStep2.score = ScoreStep2.score + 1;
+      step2.VoltmeterLCVerification = true;
+      ScoreStep2.DrawScore();
+      step2.UpdateTable1("VoltLC");
+    } else if (
+      !step2.AmmterZEVerification &&
+      x > step2.AmmZEOption1_x_min &&
+      x < step2.AmmZEOption1_x_max &&
+      y > step2.AmmZEOption1_y_min &&
+      y < step2.AmmZEOption1_y_max
+    ) {
+      ScoreStep2.score = ScoreStep2.score + 1;
+      step2.AmmterZEVerification = true;
+      ScoreStep2.DrawScore();
+      step2.UpdateTable1("AmmZE");
+    } else if (
+      !step2.VoltmeterZEVerification &&
+      x > step2.VoltZEOption2_x_min &&
+      x < step2.VoltZEOption2_x_max &&
+      y > step2.VoltZEOption2_y_min &&
+      y < step2.VoltZEOption2_y_max
+    ) {
+      ScoreStep2.score = ScoreStep2.score + 1;
+      step2.VoltmeterZEVerification = true;
+      ScoreStep2.DrawScore();
+      step2.UpdateTable1("VoltZE");
+    }
+    if (ScoreStep2.score == 6) {
+      ScoreStep2.color = "green";
+      ScoreStep3.color = "yellow";
+      step_count = step_count + 1;
+      var step_text = [];
+      step_text[0] =
+        "Completed 2nd step: click on the round button no. 3 to proceed to next step";
+      //step2.DrawStep(step_text);
+    }
+    ScoreStep2.DrawScore();
+    ScoreStep3.DrawScore();
+  } else if (step_count == 3) {
+    if (
+      x > ScoreStep3.cx - 40 &&
+      x < ScoreStep3.cx + 40 &&
+      y > ScoreStep3.cy - 40 &&
+      y < ScoreStep3.cy + 40
+    ) {
+      console.log("start step 3");
+      procStep3();
+    }
+    if (
+      x > battery.battery_switch_x_min &&
+      x < battery.battery_switch_x_max &&
+      y > battery.battery_switch_y_min &&
+      y < battery.battery_switch_y_max
+    ) {
+      if (battery.power == false) {
+        console.log("inside battery power off detected");
+        battery.DrawPowerON();
+        voltmeter.DrawPointers("voltmeter");
+        ammeter.DrawPointers("ammter");
+      } else if (battery.power == true) {
+        console.log("inside battery power on detected");
+        battery.DrawPowerOFF();
+        voltmeter.DrawPointers("voltmeter");
+        ammeter.DrawPointers("ammter");
+      }
+    }
+    if (
+      x > rheostat.rh_knob_x_min &&
+      x < rheostat.rh_knob_x_max &&
+      y > rheostat.rh_knob_y_min &&
+      y < rheostat.rh_knob_y_max &&
+      rheostat.rheostat_angle < 180
+    ) {
+      console.log(
+        `Step3: knob rect dimensions=${rheostat.rh_knob_x_min},${rheostat.rh_knob_x_max},${rheostat.rh_knob_y_min},${rheostat.rh_knob_y_max}`
+      );
+      console.log(`mouse pointer location: ${x}, ${y}`);
+      rheostat.rheostat_angle = rheostat.rheostat_angle + 45;
+      rheostat.DrawKnob();
+      if (battery.power) {
+        voltmeter.DrawPointers("voltmeter");
+        ammeter.DrawPointers("ammter");
+        if (step3.step_count < 5) {
+          DrawTableStep3Options();
+          step3.step_count = step3.step_count + 1;
+        }
+      }
     }
   }
 });
@@ -944,10 +1380,10 @@ battery.DrawPowerOFF();
 battery.RedSocket = false;
 battery.BlackSocket = false;
 battery.RedSocketVerification = false;
-const rheostat = new Apparatus(300, 10, 250, 150, 450, 85, 40, 5);
+const rheostat = new Apparatus(300, 10, 225, 150, 425, 85, 40, 5);
 rheostat.DrawOuterRect();
 rheostat.DrawDial(true, ["10Ω", "50Ω", "500Ω", "100KΩ", "20KΩ"]);
-rheostat.DrawKnob(0);
+rheostat.DrawKnob();
 rheostat.DrawSockets(true);
 rheostat.RedSocket = false;
 rheostat.BlackSocket = false;
@@ -959,7 +1395,8 @@ voltmeter.DrawDial(false);
 voltmeter.DrawDialLarge(["0V", "5V", "10V", "15V", "20V", "25V", "V"]);
 //voltmeter.DrawKnob(0);
 voltmeter.DrawSockets(false);
-voltmeter.DrawPointers(8, "V");
+voltmeter.DrawPointers("voltmeter");
+voltmeter.DrawDialText("V");
 voltmeter.RedSocket = false;
 voltmeter.BlackSocket = false;
 voltmeter.RedSocketVerification = false;
@@ -972,7 +1409,8 @@ ammeter.DrawOuterRect();
 ammeter.DrawDial(false);
 ammeter.DrawDialLarge(["0", "20", "40", "60", "80", "100", "mA"]);
 ammeter.DrawSockets(false);
-ammeter.DrawPointers(0, "mA");
+ammeter.DrawPointers("ammter");
+ammeter.DrawDialText("mA");
 ammeter.RedSocket = false;
 ammeter.BlackSocket = false;
 ammeter.RedSocketVerification = false;
@@ -991,7 +1429,7 @@ ScoreStep5.DrawScore();
 
 const step1 = new Step(10, 450, 900, 150);
 const step2 = new Step(10, 600, 900, 100, 550, 200, 133, 50);
-const step3 = new Step(10, 600, 900, 100);
+const step3 = new Step(10, 600, 900, 100, 550, 200, 133, 50);
 const step4 = new Step(10, 600, 900, 100);
 const step5 = new Step(10, 600, 900, 100);
 var step_text = [];
@@ -1006,8 +1444,14 @@ step_text[3] =
 //console.log(step_text);
 step1.DrawCircuit();
 //step1.DrawScore();
-step1.DrawStep(step_text);
+//step1.DrawStep(step_text);
 
 function procStep2() {
   step2.DrawTable1();
+}
+
+function procStep3() {
+  console.log("inside proc3");
+  step3.DrawTableStep3Head();
+  step3.DrawTableStep3Options();
 }

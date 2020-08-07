@@ -4,7 +4,9 @@ var c = canvas.getContext("2d");
 c.canvas.width = window.innerWidth;
 c.canvas.height = window.innerHeight;
 
-var step_count = 1;
+var step_count = 0;
+var IsAudio = false;
+var isIntroDone = false;
 //Methods and properties common to all apparatus
 class Apparatus {
   constructor(
@@ -64,8 +66,23 @@ class Apparatus {
     c.fillStyle = "white";
     c.strokeStyle = "black";
     c.lineWidth = 2;
+    var info_x = this.x + this.width - 20;
+    var info_y = this.y + 15;
+    this.info_x_min = info_x - 12;
+    this.info_x_max = info_x + 12;
+    this.info_y_min = info_y - 12;
+    this.info_y_max = info_y + 12;
     c.fillRect(this.x, this.y, this.width, this.height);
     c.strokeRect(this.x, this.y, this.width, this.height);
+    c.arc(info_x, info_y, 12, 0 * Math.PI, 2 * Math.PI, true);
+    c.fillStyle = "red";
+    c.fill();
+    c.stroke();
+    c.fillStyle = "black";
+    c.font = "20px Bold Italic";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText("I", info_x, info_y);
   }
 
   DrawResistor() {
@@ -81,6 +98,24 @@ class Apparatus {
     c.beginPath();
     c.arc(this.x + this.width, this.y, 5, 0 * Math.PI, 2 * Math.PI, true);
     c.stroke();
+    c.beginPath();
+    var info_x = this.x + this.width + 20;
+    var info_y = this.y;
+    this.info_x_min = this.x + this.width + 8;
+    this.info_x_max = this.x + this.width + 28;
+    this.info_y_min = this.y - 12;
+    this.info_y_max = this.y + 12;
+    c.arc(info_x, info_y, 12, 0 * Math.PI, 2 * Math.PI, true);
+    c.fillStyle = "red";
+    c.strokeStyle = "black";
+    c.lineWidth = 2;
+    c.fill();
+    c.stroke();
+    c.fillStyle = "black";
+    c.font = "20px Bold Italic";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText("I", info_x, info_y);
   }
 
   DrawDial(IsDrawText, r_text) {
@@ -109,7 +144,7 @@ class Apparatus {
         var y_text =
           this.c_y - Math.sin((angle * Math.PI) / 180) * this.radius4;
         if (angle <= 90) {
-          x_text = x_text - 18;
+          x_text = x_text - 22;
           y_text = y_text + 5;
         } else if (angle > 90) {
           x_text = x_text - 8;
@@ -125,6 +160,8 @@ class Apparatus {
       c.stroke();
       if (IsDrawText) {
         c.beginPath();
+        c.textAlign = "left";
+        c.textBaseline = "middle";
         c.fillStyle = "black";
         c.font = "16px Arial";
         c.fillText(r_text[i], x_text, y_text);
@@ -171,6 +208,8 @@ class Apparatus {
       c.lineTo(x_end, y_end);
       c.stroke();
       c.beginPath();
+      c.textAlign = "center";
+      c.textBaseline = "middle";
       c.fillStyle = "black";
       c.font = "16px Arial";
       c.fillText(r_text[i], x_text, y_text);
@@ -471,7 +510,7 @@ class ScoreBoard {
     c.fillStyle = "#000000";
     c.textAlign = "center";
     c.textBaseline = "middle";
-    c.fillText("Steps", 750, 35);
+    c.fillText("Score Board", 750, 35);
     c.fillText("1", 590, 75);
     c.fillText("2", 670, 75);
     c.fillText("3", 750, 75);
@@ -1220,6 +1259,8 @@ class Step {
   UpdateTable4(option) {
     c.strokeStyle = "black";
     c.font = "15px Arial";
+    c.textAlign = "left";
+    c.textBaseline = "middle";
     if (option == "slope") {
       c.fillStyle = "green";
       c.fillRect(step5.slope_x_min, step5.slope_y_min, step5.t1w, step5.t1h);
@@ -1496,7 +1537,78 @@ class Step {
 canvas.addEventListener("mousedown", (md_e) => {
   x = md_e.offsetX;
   y = md_e.offsetY;
-  if (step_count == 1) {
+  console.log(`x=${x},y=${y}`);
+  if (x > 900 && x < 950 && y > 10 && y < 60) {
+    toggle_audio();
+  }
+  if (step_count == 0) {
+    if (
+      x > battery.info_x_min &&
+      x < battery.info_x_max &&
+      y > battery.info_y_min &&
+      y < battery.info_y_max &&
+      IsAudio
+    ) {
+      turn_off_other_device();
+      console.log("Give battery info");
+      audio_battery.play();
+      isBatteryAudio = true;
+    } else if (
+      x > rheostat.info_x_min &&
+      x < rheostat.info_x_max &&
+      y > rheostat.info_y_min &&
+      y < rheostat.info_y_max &&
+      IsAudio
+    ) {
+      turn_off_other_device();
+      console.log("Give rheostat info");
+      audio_rheostat.play();
+      isRheostatAudio = true;
+    } else if (
+      x > voltmeter.info_x_min &&
+      x < voltmeter.info_x_max &&
+      y > voltmeter.info_y_min &&
+      y < voltmeter.info_y_max &&
+      IsAudio
+    ) {
+      turn_off_other_device();
+      console.log("give voltmeter info");
+      audio_voltmeter.play();
+      isVoltmeterAudio = true;
+    } else if (
+      x > ammeter.info_x_min &&
+      x < ammeter.info_x_max &&
+      y > ammeter.info_y_min &&
+      y < ammeter.info_y_max &&
+      IsAudio
+    ) {
+      turn_off_other_device();
+      console.log("give ammeter info");
+      audio_ammeter.play();
+      isAmmeterAudio = true;
+    } else if (
+      x > resistor.info_x_min &&
+      x < resistor.info_x_max &&
+      y > resistor.info_y_min &&
+      y < resistor.info_y_max &&
+      IsAudio
+    ) {
+      turn_off_other_device();
+      console.log("give resistor info");
+      audio_manganin.play();
+      isManganinAudio = true;
+    } else if (
+      x > ScoreStep1.cx - 40 &&
+      x < ScoreStep1.cx + 40 &&
+      y > ScoreStep1.cy - 40 &&
+      y < ScoreStep1.cy + 40 &&
+      !ScoreStep1.ClickedScoreBoard
+    ) {
+      ScoreStep1.ClickedScoreBoard = true;
+      console.log("start step 1");
+      procStep1();
+    }
+  } else if (step_count == 1) {
     var space = 10;
     console.log(`mouse down event: x=${x} and y=${y}`);
     batt_r_x_min = battery.sock_r_x - space;
@@ -1642,7 +1754,7 @@ canvas.addEventListener("mousedown", (md_e) => {
       ((step1.l_step_event == "battery_b" &&
         step1.c_step_event == "rheostat_b1") ||
         (step1.l_step_event == "rheostat_b1" &&
-          step12.c_step_event == "battery_b"))
+          step1.c_step_event == "battery_b"))
     ) {
       ScoreStep1.score = ScoreStep1.score + 1;
       rheostat.bSocketVerification = true;
@@ -1693,11 +1805,11 @@ canvas.addEventListener("mousedown", (md_e) => {
     if (ScoreStep1.score == 6) {
       ScoreStep1.color = "green";
       ScoreStep2.color = "yellow";
+      if (IsAudio) {
+        turn_off_other_device();
+        audio_step1_end.play();
+      }
       step_count = step_count + 1;
-      var step_text = [];
-      step_text[0] =
-        "Completed 1st step: click on the round button no. 2 to proceed to next step";
-      //step1.DrawStep(step_text);
     }
     ScoreStep1.DrawScore();
     ScoreStep2.DrawScore();
@@ -1789,10 +1901,10 @@ canvas.addEventListener("mousedown", (md_e) => {
       ScoreStep2.color = "green";
       ScoreStep3.color = "yellow";
       step_count = step_count + 1;
-      var step_text = [];
-      step_text[0] =
-        "Completed 2nd step: click on the round button no. 3 to proceed to next step";
-      //step2.DrawStep(step_text);
+      if (IsAudio) {
+        turn_off_other_device();
+        audio_step2_end.play();
+      }
     }
     ScoreStep2.DrawScore();
     ScoreStep3.DrawScore();
@@ -2010,14 +2122,25 @@ canvas.addEventListener("mousedown", (md_e) => {
         ScoreStep3.DrawScore();
       }
     }
+    if (
+      ScoreStep3.score == 3 ||
+      ScoreStep3.score == 6 ||
+      ScoreStep3.score == 9 ||
+      ScoreStep3.score == 12
+    ) {
+      if (IsAudio) {
+        turn_off_other_device();
+        audio_step3_row1.play();
+      }
+    }
     if (ScoreStep3.score == 15) {
       ScoreStep3.color = "green";
       ScoreStep4.color = "yellow";
       step_count = step_count + 1;
-      var step_text = [];
-      step_text[0] =
-        "Completed 2nd step: click on the round button no. 3 to proceed to next step";
-      //step2.DrawStep(step_text);
+      if (IsAudio) {
+        turn_off_other_device();
+        audio_step3_end.play();
+      }
     }
     ScoreStep3.DrawScore();
     ScoreStep4.DrawScore();
@@ -2048,6 +2171,10 @@ canvas.addEventListener("mousedown", (md_e) => {
       ScoreStep4.color = "green";
       ScoreStep5.color = "yellow";
       step_count = step_count + 1;
+      if (IsAudio) {
+        turn_off_other_device();
+        audio_step4_end.play();
+      }
       ScoreStep4.score = ScoreStep4.score + 1;
       ScoreStep4.DrawScore();
       ScoreStep5.DrawScore();
@@ -2105,11 +2232,54 @@ canvas.addEventListener("mousedown", (md_e) => {
     if (ScoreStep5.score == 3 && !step5.step5VerificationDone) {
       step5.step5VerificationDone = true;
       ScoreStep5.color = "green";
+      if (IsAudio) {
+        turn_off_other_device();
+        audio_step5_end.play();
+      }
       step_count = step_count + 1;
       ScoreStep5.DrawScore();
     }
   }
 });
+
+//Audio objects
+var isWindowsLoadAudio = false;
+var isBatteryAudio = false;
+var isRheostatAudio = false;
+var isVoltmeterAudio = false;
+var isAmmeterAudio = false;
+var isManganinAudio = false;
+var isStep1StartAudio = false;
+var isStep2StartAudio = false;
+var isStep3StartAudio = false;
+var isStep4StartAudio = false;
+var isStep5StartAudio = false;
+var isStep1EndAudio = false;
+var isStep2EndAudio = false;
+var isStep3EndAudio = false;
+var isStep4EndAudio = false;
+var isStep5EndAudio = false;
+var isStep3RowAudio = false;
+var isStep3ErrorAudio = false;
+
+var audio_windows_load = new Audio("audio/window_load.mp3");
+var audio_battery = new Audio("audio/battery eliminator.mp3");
+var audio_rheostat = new Audio("audio/rheostat.mp3");
+var audio_voltmeter = new Audio("audio/voltmeter.mp3");
+var audio_ammeter = new Audio("audio/ammeter.mp3");
+var audio_manganin = new Audio("audio/manganin.mp3");
+var audio_step1_start = new Audio("audio/step1_start.mp3");
+var audio_step1_end = new Audio("audio/step1_end.mp3");
+var audio_step2_start = new Audio("audio/step2_start.mp3");
+var audio_step2_end = new Audio("audio/step2_end.mp3");
+var audio_step3_start = new Audio("audio/step3_start.mp3");
+var audio_step3_end = new Audio("audio/step3_end.mp3");
+var audio_step3_row1 = new Audio("audio/step3_row.mp3");
+var audio_step3_error = new Audio("audio/step3_error.mp3");
+var audio_step4_start = new Audio("audio/step4_start.mp3");
+var audio_step4_end = new Audio("audio/step4_end.mp3");
+var audio_step5_start = new Audio("audio/step5_start.mp3");
+var audio_step5_end = new Audio("audio/step5_end.mp3");
 
 const battery = new Apparatus(10, 10, 250, 150, 150, 85, 40, 5);
 battery.DrawOuterRect();
@@ -2120,7 +2290,9 @@ battery.DrawPowerOFF();
 battery.RedSocket = false;
 battery.BlackSocket = false;
 battery.RedSocketVerification = false;
-const rheostat = new Apparatus(300, 10, 225, 150, 425, 85, 40, 5);
+
+//const rheostat = new Apparatus(300, 10, 225, 150, 425, 85, 40, 5);
+const rheostat = new Apparatus(300, 10, 225, 150, 400, 85, 40, 5);
 rheostat.DrawOuterRect();
 rheostat.DrawDial(true, ["10Ω", "50Ω", "500Ω", "100KΩ", "20KΩ"]);
 rheostat.DrawKnob("rheostat");
@@ -2156,7 +2328,7 @@ ammeter.BlackSocket = false;
 ammeter.RedSocketVerification = false;
 
 ScoreBoard.DrawBoard();
-const ScoreStep1 = new ScoreBoard(590, 120, "yellow", 0);
+const ScoreStep1 = new ScoreBoard(590, 120, "red", 0);
 ScoreStep1.DrawScore();
 const ScoreStep2 = new ScoreBoard(670, 120, "red", 0);
 ScoreStep2.DrawScore();
@@ -2185,22 +2357,152 @@ step_text[3] =
 step1.DrawCircuit();
 //step1.DrawScore();
 //step1.DrawStep(step_text);
-
+Step0();
+function procStep1() {
+  ScoreStep1.color = "yellow";
+  ScoreStep1.DrawScore();
+  turn_off_other_device();
+  console.log("audioProcedure for step 1");
+  if (IsAudio) {
+    audio_step1_start.play();
+  }
+  step_count = step_count + 1;
+}
 function procStep2() {
+  turn_off_other_device();
+  console.log("audioProcedure for step 2");
+  if (IsAudio) {
+    audio_step2_start.play();
+  }
   step2.DrawTable1();
 }
 
 function procStep3() {
+  turn_off_other_device();
+  console.log("audioProcedure for step 3");
+  if (IsAudio) {
+    audio_step3_start.play();
+  }
   console.log("inside proc3");
   step3.DrawTableStep3Head();
   step3.DrawTableStep3Options();
 }
 function procStep4() {
+  turn_off_other_device();
+  console.log("audioProcedure for step 4");
+  if (IsAudio) {
+    audio_step4_start.play();
+  }
   console.log("inside proc4");
   step4.DrawCalcs();
   //step3.DrawTableStep3Options();
 }
 
 function procStep5() {
+  turn_off_other_device();
+  console.log("audioProcedure for step 5");
+  if (IsAudio) {
+    audio_step5_start.play();
+  }
   step5.DrawGraph();
+}
+
+function Step0() {
+  const image = new Image();
+  image.onload = function () {
+    c.drawImage(image, 900, 10);
+  };
+  image.src = "images/speaker_off.jpg";
+  isWindowsLoadAudio = true;
+  //audio_windows_load.play();
+}
+
+function toggle_audio() {
+  const image = new Image();
+  if (IsAudio) {
+    image.onload = function () {
+      c.drawImage(image, 900, 10);
+    };
+    image.src = "images/speaker_off.jpg";
+    IsAudio = false;
+    turn_off_other_device();
+  } else {
+    image.onload = function () {
+      c.drawImage(image, 900, 10);
+    };
+    image.src = "images/speaker_on.jpg";
+    IsAudio = true;
+    if (step_count == 0 && !isIntroDone) {
+      audio_windows_load.play();
+      isIntroDone = true;
+    }
+    if (step_count == 1) {
+      audio_step1_start.play();
+    }
+  }
+}
+
+function turn_off_other_device() {
+  console.log("Inside tuen off other device");
+  if (step_count == 0) {
+    if (isWindowsLoadAudio) {
+      console.log("Inside windows load audio");
+      audio_windows_load.pause();
+      isWindowsLoadAudio = false;
+    }
+    if (isBatteryAudio) {
+      audio_battery.pause();
+      isBatteryAudio = false;
+    }
+    if (isRheostatAudio) {
+      audio_rheostat.pause();
+      isRheostatAudio = false;
+    }
+    if (isVoltmeterAudio) {
+      audio_voltmeter.pause();
+      isVoltmeterAudio = false;
+    }
+    if (isAmmeterAudio) {
+      audio_ammeter.pause();
+      isAmmeterAudio = false;
+    }
+    if (isManganinAudio) {
+      audio_manganin.pause();
+      isManganinAudio = false;
+    }
+  }
+  if (step_count == 1) {
+    console.log("Inside step1 turn off device");
+    audio_step1_start.pause();
+    audio_step1_end.pause();
+  }
+  if (step_count == 2) {
+    console.log("Inside step1 turn off device");
+    audio_step1_start.pause();
+    audio_step1_end.pause();
+    audio_step2_start.pause();
+    audio_step2_end.pause();
+  }
+  if (step_count == 3) {
+    console.log("Inside step1 turn off device");
+    audio_step2_start.pause();
+    audio_step2_end.pause();
+    audio_step3_start.pause();
+    audio_step3_end.pause();
+    audio_step3_row1.pause();
+  }
+  if (step_count == 4) {
+    console.log("Inside step1 turn off device");
+    audio_step3_start.pause();
+    audio_step3_end.pause();
+    audio_step4_start.pause();
+    audio_step4_end.pause();
+  }
+  if (step_count == 5) {
+    console.log("Inside step1 turn off device");
+    audio_step4_start.pause();
+    audio_step4_end.pause();
+    audio_step5_start.pause();
+    audio_step5_end.pause();
+  }
 }

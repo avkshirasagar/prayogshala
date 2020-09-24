@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js webgl - glTF loader</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <link type="text/css" rel="stylesheet" href="main.css" />
+  </head>
+
+  <body>
+    <div id="info">
+      <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a>
+      - GLTFLoader<br />
+      Battle Damaged Sci-fi Helmet by
+      <a
+        href="https://sketchfab.com/theblueturtle_"
+        target="_blank"
+        rel="noopener"
+        >theblueturtle_</a
+      ><br />
+      <a
+        href="https://hdrihaven.com/hdri/?h=royal_esplanade"
+        target="_blank"
+        rel="noopener"
+        >Royal Esplanade</a
+      >
+      by
+      <a href="https://hdrihaven.com/" target="_blank" rel="noopener"
+        >HDRI Haven</a
+      >
+    </div>
+
+    <script type="module">
+      import * as THREE from "https://unpkg.com/three@0.120.1/build/three.module.js";
+
+      import { OrbitControls } from "https://unpkg.com/three@0.120.1/examples/jsm/controls/OrbitControls.js";
+      import { DragControls } from "https://unpkg.com/three@0.120.1/examples/jsm/controls/DragControls.js";
+      import { GLTFLoader } from "https://unpkg.com/three@0.120.1/examples/jsm/loaders/GLTFLoader.js";
+      import { RGBELoader } from "https://unpkg.com/three@0.120.1/examples/jsm/loaders/RGBELoader.js";
+      import { RoughnessMipmapper } from "https://unpkg.com/three@0.120.1/examples/jsm/utils/RoughnessMipmapper.js";
+      import { TextureLoader } from "https://unpkg.com/three@0.120.1/src/loaders/TextureLoader.js";
+      import { Line } from "https://unpkg.com/three@0.120.1/src/objects/Line.js";
+
+      var container, controls, controlsDM;
+      var camera, scene, renderer;
+      var objects = [];
+      var mouse = new THREE.Vector2();
+      var objectBoard;
+      var objectSheet;
+      var objectCandle;
+      var lmousex;
+      var oldPositionCandle = new THREE.Vector3();
+      var newPositionCandle = new THREE.Vector3();
+      var oldPositionBoard = new THREE.Vector3();
+      var newPositionBoard = new THREE.Vector3();
+      var oldPositionLens = new THREE.Vector3();
+      var oldPositionSheet = new THREE.Vector3();
+      var lObjectPositionx;
+      var lObjectPositiony;
+      var lObjectPositionz;
+      var tex,
+        texArray = [],
+        CandlelineVertices = [];
+      var positionAttribute;
+      var CandlelineGeometry;
+
+      init();
+      animate();
+
+      function init() {
+        container = document.createElement("div");
+        document.body.appendChild(container);
+
+        camera = new THREE.PerspectiveCamera(
+          100,
+          window.innerWidth / window.innerHeight,
+          1,
+          200
+        );
+        /* camera.position.set(0, 0, 10);
+        camera.rotation.z = (90 * Math.PI) / 180; */
+        camera.position.set(0, 0, 20);
+
+        scene = new THREE.Scene();
+
+        new RGBELoader()
+          .setDataType(THREE.UnsignedByteType)
+          .setPath("images/")
+          .load("equirectangular_room.hdr", function (texture) {
+            var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+
+            scene.background = envMap;
+            scene.environment = envMap;
+
+            texture.dispose();
+            pmremGenerator.dispose();
+
+            render();
+
+            // model
+
+            // use of RoughnessMipmapper is optional
+            var roughnessMipmapper = new RoughnessMipmapper(renderer);
+
+            var loader = new GLTFLoader().setPath("");
+            loader.load(
+              "convex_lens_size.gltf",
+              function (gltf) {
+                gltf.scene.traverse(function (child) {
+                  if (child.isMesh) {
+                    //RoughnessMipmapper seems to be broken with WebGL 2.0
+                    roughnessMipmapper.generateMipmaps(child.material);
+                  }
+                });
+                console.log(gltf.scene);
+                //Moving single object (candle)
+                objectCandle = gltf.scene.getObjectByName("candle");
+                objectBoard = gltf.scene.getObjectByName("board");
+                objectSheet = gltf.scene.getObjectByName("sheet");
+                var objectlensStand = gltf.scene.getObjectByName("lensStand");
+
+                //create image texture for flame on the sheet
+
+                var flameImages = [
+                  "flame0.png",
+                  "flame1.png",
+                  "flame2.png",
+                  "flame3.png",
+                  "flame4.png",
+                  "flame5.png",
+                  "flame6.png",
+                  "flame7.png",
+                  "flame8.png",
+                  "flame9.png",
+                  "flame10.png",
+                ];
+                for (var i = 0; i <= 9; i++) {
+                  var image = "./images/flame/" + flameImages[i];
+                  console.log(image);
+                  tex = new TextureLoader().load(image);
+                  tex.encoding = THREE.sRGBEncoding;
+                  tex.flipY = false;
+                  tex.needsUpdate = true;
+                  texArray[i] = tex;
+                }
+
+                console.log(texArray[0]);
+
+                //tex.wrapS = tex.wrapT = THREE.repeatWrapping;
+                objectSheet.material = new THREE.MeshBasicMaterial({
+                  map: texArray[0],
+                  color: 0xffffff,
+                  side: THREE.FrontSide,
+                });
+
+                console.log(gltf.scene);
+
+                //Draw line from candle to scale
+                /* CandlelineVertices.push(
+                  new THREE.Vector3(
+                    objectCandle.position.x,
+                    objectCandle.position.y - 0.5,
+                    objectCandle.position.z
+                  )
+                );
+                CandlelineVertices.push(
+                  new THREE.Vector3(
+                    objectCandle.position.x,
+                    objectCandle.position.y - 0.5,
+                    objectCandle.position.z + 1
+                  )
+                ); */
+                CandlelineVertices = new Float32Array([
+                  objectCandle.position.x,
+                  objectCandle.position.y - 0.5,
+                  objectCandle.position.z,
+                  objectCandle.position.x,
+                  objectCandle.position.y - 0.5,
+                  objectCandle.position.z + 1,
+                ]);
+                CandlelineGeometry = new THREE.BufferGeometry();
+                positionAttribute = new THREE.Float32BufferAttribute(
+                  CandlelineVertices,
+                  3
+                );
+                positionAttribute.setUsage(THREE.DynamicDrawUsage);
+                positionAttribute.needsUpdate = true;
+                /*                 CandlelineGeometry.setAttribute.position = new THREE.Float32BufferAttribute(
+                  CandlelineVertices,
+                  3
+                ); */
+                CandlelineGeometry.setAttribute("position", positionAttribute);
+                //CandlelineGeometry.geometry.attributes.position.needsUpdate = true;
+
+                var LenslineVertices = [];
+                console.log("Candle_x: " + objectCandle.position.x);
+                console.log("lens_x: " + objectlensStand.position.x);
+                console.log("Candle_y: " + objectCandle.position.y);
+                console.log("lens_y: " + objectlensStand.position.y);
+                console.log("Candle_z: " + objectCandle.position.z);
+                console.log("lens_z: " + objectlensStand.position.z);
+                LenslineVertices.push(
+                  new THREE.Vector3(
+                    objectlensStand.position.x,
+                    objectlensStand.position.y - 0.3,
+                    objectlensStand.position.z
+                  )
+                );
+                LenslineVertices.push(
+                  new THREE.Vector3(
+                    objectlensStand.position.x,
+                    objectlensStand.position.y - 0.3,
+                    objectlensStand.position.z + 1
+                  )
+                );
+
+                var LenslineGeometry = new THREE.BufferGeometry().setFromPoints(
+                  LenslineVertices
+                );
+
+                var lineMaterial = new THREE.LineBasicMaterial({
+                  color: 0x000000,
+                });
+                var Candleline = new THREE.Line(
+                  CandlelineGeometry,
+                  lineMaterial
+                );
+                var Lensline = new THREE.Line(LenslineGeometry, lineMaterial);
+                gltf.scene.add(Candleline);
+                gltf.scene.add(Lensline);
+                //scene.add(spr);
+                gltf.scene.position.set(0, -10, 0);
+                //gltf.scene.position.set(0, -5, 0);
+                scene.add(gltf.scene);
+
+                //Add Axis helper
+                var axesHelper = new THREE.AxesHelper(5);
+                scene.add(axesHelper);
+
+                //Add image object
+                var Cgeometry = new THREE.CircleGeometry(1, 32);
+                var Cmaterial = new THREE.MeshBasicMaterial({
+                  color: 0xffff00,
+                  transparent: true,
+                });
+                Cmaterial.opacity = 1;
+                var sImage = new THREE.Mesh(Cgeometry, Cmaterial);
+                objects.push(sImage);
+                objects.push(objectCandle);
+                objects.push(objectBoard);
+                //objects.push(objectSheet);
+                //objects.push(group);
+                //console.log("object to be dragged" + sImage);
+
+                scene.add(sImage);
+
+                roughnessMipmapper.dispose();
+
+                render();
+              },
+              function () {}, // onProgress function
+              function (error) {
+                console.log(error);
+              } // no error gets logged
+            );
+          });
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerWidth);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        container.appendChild(renderer.domElement);
+
+        var pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.addEventListener("change", render); // use if there is no animation loop
+        controls.minDistance = 2;
+        controls.maxDistance = 10;
+        controls.target.set(0, 0, -1);
+        controls.update();
+
+        window.addEventListener("mousemove", onMouseMove, false);
+        controlsDM = new DragControls(objects, camera, renderer.domElement);
+        controlsDM.addEventListener("hoveron", function () {
+          //console.log("inside hover");
+
+          controls.enabled = false;
+        });
+        controlsDM.addEventListener("hoveroff", function () {
+          //console.log("inside hover");
+          controls.enabled = true;
+        });
+
+        controlsDM.addEventListener("dragstart", function (event) {
+          lObjectPositionx = event.object.position.x;
+          lObjectPositiony = event.object.position.y;
+          lObjectPositionz = event.object.position.z;
+
+          console.log(
+            "objects y position from event handler in drag start:" +
+              lObjectPositiony
+          );
+          console.log(
+            "objects z position from event handler in drag start:" +
+              lObjectPositionz
+          );
+        });
+
+        controlsDM.addEventListener("drag", onDragEvent);
+        controlsDM.addEventListener("dragend", function () {
+          controls.enabled = true;
+        });
+
+        window.addEventListener("resize", onWindowResize, false);
+        //Add event listener to highlight dragged objects
+      }
+
+      function updateImage() {
+        pass();
+      }
+
+      function showNewPositions() {
+        newPositionCandle.copy(objects[1].position);
+        //console.log("newPositionCandle_x=" + newPositionCandle.x);
+      }
+      //updateSpr();
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        //console.log("inside animate");
+      }
+
+      function onMouseMove(e) {
+        //console.log("on mouse move");
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        //console.log(mouse.x);
+        //console.log(mouse.y);
+      }
+
+      function updateLineVertices(position) {
+        var CandleLinex;
+        if (position == "left_extreme") {
+          CandleLinex = -5.8;
+          //console.log("inside extreme left: candle x position: " + CandleLinex);
+        } else if (position == "right_extreme") {
+          CandleLinex = -0.7;
+          //console.log("inside extreme right: candle x position: " + CandleLinex);
+        } else {
+          CandleLinex = objectCandle.position.x;
+          //console.log("inside middle: candle x position: " + CandleLinex);
+        }
+        CandlelineVertices = [
+          CandleLinex,
+          objectCandle.position.y - 0.5,
+          objectCandle.position.z,
+          objectCandle.position.x,
+          objectCandle.position.y - 0.5,
+          objectCandle.position.z + 1,
+        ];
+        //console.log("inside candle move: candle vertices: " + CandlelineVertices);
+        positionAttribute = new THREE.Float32BufferAttribute(
+          CandlelineVertices,
+          3
+        );
+        CandlelineGeometry.setAttribute("position", positionAttribute);
+        CandlelineGeometry.computeBoundingSphere();
+      }
+
+      var plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+      var raycaster = new THREE.Raycaster();
+      var intersects = new THREE.Vector3();
+
+      function onDragEvent(e) {
+        //showNewPositions();
+        //retain y and z positions
+        //lmousex = mouse.x;
+        //Keeping y and z positions constant
+        e.object.position.y = lObjectPositiony;
+        e.object.position.z = lObjectPositionz;
+
+        //Moving sheet with board
+        if (e.object == objects[2]) {
+          //console.log("board is being dragged");
+          objectSheet.position.x = objectBoard.position.x - 0.25;
+          objectSheet.position.y = objectBoard.position.y;
+          objectSheet.position.z = objectBoard.position.z;
+          //console.log("board position: " + objectBoard.position.x);
+          //console.log("sheet position: " + objectSheet.position.x);
+        }
+        if (e.object == objects[1]) {
+          updateLineVertices();
+        }
+
+        //Not allowing candle to move beyong lens
+        if (objectCandle.position.x > -0.7) {
+          objectCandle.position.x = -0.7;
+          updateLineVertices("right_extreme");
+        }
+
+        //Not allowing candle to fall off the table
+        if (objectCandle.position.x < -5.8) {
+          objectCandle.position.x = -5.8;
+          updateLineVertices("left_extreme");
+        }
+        //Not allowing board to fall off the table
+        if (objectBoard.position.x > 6.4) {
+          objectBoard.position.x = 6.4;
+          objectSheet.position.x = objectBoard.position.x - 0.25;
+          objectSheet.position.y = objectBoard.position.y;
+          objectSheet.position.z = objectBoard.position.z;
+        }
+
+        //Not allowing board to go beyond candle
+        if (objectBoard.position.x < 0.8) {
+          objectBoard.position.x = 0.8;
+          objectSheet.position.x = objectBoard.position.x - 0.25;
+          objectSheet.position.y = objectBoard.position.y;
+          objectSheet.position.z = objectBoard.position.z;
+        }
+
+        console.log("Candle position: " + objectCandle.position.x);
+        console.log("Board position: " + objectBoard.position.x);
+
+        //Logic for image display
+        if (objectCandle.position.x > -1.6) {
+          objectSheet.material.map = texArray[0];
+        } else if (
+          objectCandle.position.x < -1.6 &&
+          objectCandle.position.x >= -1.8
+        ) {
+          if (objectBoard.position.x >= 6.1 && objectBoard.position.x <= 6.3) {
+            objectSheet.material.map = texArray[2];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -1.8 &&
+          objectCandle.position.x >= -2.0
+        ) {
+          if (objectBoard.position.x >= 4.8 && objectBoard.position.x <= 5.0) {
+            objectSheet.material.map = texArray[2];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -2.0 &&
+          objectCandle.position.x >= -2.15
+        ) {
+          if (objectBoard.position.x >= 4.1 && objectBoard.position.x <= 4.3) {
+            objectSheet.material.map = texArray[3];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -2.15 &&
+          objectCandle.position.x >= -2.3
+        ) {
+          if (objectBoard.position.x >= 3.6 && objectBoard.position.x <= 3.8) {
+            objectSheet.material.map = texArray[3];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -2.3 &&
+          objectCandle.position.x >= -2.4
+        ) {
+          if (objectBoard.position.x >= 3.0 && objectBoard.position.x <= 3.2) {
+            objectSheet.material.map = texArray[4];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -2.4 &&
+          objectCandle.position.x >= -2.75
+        ) {
+          if (objectBoard.position.x >= 2.9 && objectBoard.position.x <= 3.1) {
+            objectSheet.material.map = texArray[4];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -2.75 &&
+          objectCandle.position.x >= -2.85
+        ) {
+          if (
+            objectBoard.position.x >= 2.75 &&
+            objectBoard.position.x <= 2.85
+          ) {
+            objectSheet.material.map = texArray[5];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } else if (
+          objectCandle.position.x < -2.85 &&
+          objectCandle.position.x >= -2.9
+        ) {
+          if (objectBoard.position.x >= 2.6 && objectBoard.position.x <= 2.75) {
+            objectSheet.material.map = texArray[7];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -2.9 &&
+          objectCandle.position.x >= -3.2
+        ) {
+          if (objectBoard.position.x >= 2.6 && objectBoard.position.x <= 2.7) {
+            objectSheet.material.map = texArray[7];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -3.2 &&
+          objectCandle.position.x >= -3.4
+        ) {
+          if (objectBoard.position.x >= 2.4 && objectBoard.position.x <= 2.5) {
+            objectSheet.material.map = texArray[8];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -3.4 &&
+          objectCandle.position.x >= -3.8
+        ) {
+          if (objectBoard.position.x >= 2.2 && objectBoard.position.x <= 2.4) {
+            objectSheet.material.map = texArray[8];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -3.8 &&
+          objectCandle.position.x >= -4.2
+        ) {
+          if (objectBoard.position.x >= 2.0 && objectBoard.position.x <= 2.2) {
+            objectSheet.material.map = texArray[8];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -4.2 &&
+          objectCandle.position.x >= -4.8
+        ) {
+          if (objectBoard.position.x >= 1.9 && objectBoard.position.x <= 2.0) {
+            objectSheet.material.map = texArray[9];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -4.8 &&
+          objectCandle.position.x >= -5.3
+        ) {
+          if (objectBoard.position.x >= 1.8 && objectBoard.position.x <= 2) {
+            objectSheet.material.map = texArray[9];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        } else if (
+          objectCandle.position.x < -5.3 &&
+          objectCandle.position.x >= -5.8
+        ) {
+          if (objectBoard.position.x >= 1.8 && objectBoard.position.x <= 1.9) {
+            objectSheet.material.map = texArray[9];
+          } else {
+            objectSheet.material.map = texArray[6];
+          }
+        }
+
+        /*         if (objectCandle.position.x > -2.2 && objectCandle.position.x < -1.5) {
+          console.log("candle Inside largest image position");
+          if (objectBoard.position.x > 5.6 && objectBoard.position.x < 5.9) {
+            //console.log("Board inside largest image position");
+            objectSheet.material.map = texArray[2];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        }
+
+        if (objectCandle.position.x > -2.5 && objectCandle.position.x < -1.7) {
+          console.log("candle Inside largest image position");
+          if (objectBoard.position.x > 3.9 && objectBoard.position.x < 4.3) {
+            //console.log("Board inside largest image position");
+            objectSheet.material.map = texArray[3];
+          } else {
+            objectSheet.material.map = texArray[0];
+          }
+        } */
+
+        /* var delta = mouse.x - lmousex;
+        console.log("delta: " + delta);
+        console.log(`New object position: ${e.object.position.x}`);
+
+        if (delta > 0.5) {
+          objects[0].material.opacity -= 0.5;
+          console.log("moved right by 1");
+          console.log("dragevent: lmousex= " + lmousex);
+          console.log("dragevent: mousex= " + mouse.x);
+          lmousex = mouse.x;
+          console.log("dragevent: changing lmousex= " + lmousex);
+          console.log("dragevent: mousex= " + mouse.x);
+          //objectSheet.material.map = texArray[8];
+          //updateSpr();
+        }
+        if (lmousex - mouse.x > 0.08) {
+          objects[0].material.opacity += 0.5;
+          console.log("moved left by 1");
+          console.log("dragevent: lmousex= " + lmousex);
+          console.log("dragevent: mousex= " + mouse.x);
+          lmousex = mouse.x;
+          console.log("dragevent: changing lmousex= " + lmousex);
+          console.log("dragevent: mousex= " + mouse.x);
+          //updateSpr();
+        } */
+      }
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        render();
+      }
+
+      //
+
+      function render() {
+        renderer.render(scene, camera);
+      }
+    </script>
+  </body>
+</html>

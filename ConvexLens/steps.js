@@ -412,6 +412,27 @@ function init() {
   controlsDM.deactivate();
 }
 
+function onClick(event) {
+  console.log("inside click event");
+  var vec = new THREE.Vector3(); // create once and reuse
+  var pos = new THREE.Vector3(); // create once and reuse
+
+  vec.set(
+    (event.clientX / window.innerWidth) * 2 - 1,
+    -(event.clientY / window.innerHeight) * 2 + 1,
+    0.5
+  );
+  vec.unproject(camera);
+  vec.sub(camera.position).normalize();
+  var distance = -camera.position.z / vec.z;
+
+  pos.copy(camera.position).add(vec.multiplyScalar(distance));
+  mouse.x = pos.x;
+  mouse.y = pos.y;
+  console.log("Finding Nemo: pos.x: " + pos.x + "pos.y: " + pos.y);
+  console.log("Finding Nemo: mouse.x: " + mouse.x + "mouse.y: " + mouse.y);
+}
+
 function drawCanvasText(text) {
   var i, j;
   var x = 5;

@@ -591,6 +591,10 @@ function onClick(event) {
   } else if (step == 5) {
     /*console.log("OnClick: Step5: calling proc1: clickCount: " + clickCount);*/
     proc1(pos.x, pos.y);
+  } else if (step == 6) {
+    proc2(pos.x, pos.y);
+  } else if (step == 7) {
+    proc3(pos.x, pos.y);
   }
 }
 
@@ -748,7 +752,7 @@ function proc1(x, y) {
                 y_min = readingCords[i][j][1] - 0.16;
                 y_max = readingCords[i][j][1] + 0.16;
               }
-              console.log(
+              /*console.log(
                 "x_min: " +
                   x_min +
                   "x_max: " +
@@ -757,7 +761,7 @@ function proc1(x, y) {
                   y_min +
                   "y_max: " +
                   y_max
-              );
+              );*/
               if (x > x_min && x < x_max && y > y_min && y < y_max) {
                 highlightRow = i + 1;
                 highlightColumn = j;
@@ -774,37 +778,71 @@ function proc1(x, y) {
             }
           }
         })();
-      }
-      break;
-    case 3:
-      console.log(
-        "Proc1: case 3: x_min: " +
-          x_min +
-          "x_max: " +
-          x_max +
-          "y_min: " +
-          y_min +
-          "y_max: " +
-          y_max
-      );
-
-      if (x > x_min && x < x_max && y > y_min && y < y_max) {
-        var answer = getAnswer();
-        if (answer != null) {
-          readings[highlightRow - 1][highlightColumn] = answer;
-          drawCanvasTable(5, 2, "Readings");
-          clickCount -= 1;
-        }
+      } else if (intersects[0].object.name == "button2") {
+        clickCount = 0;
+        step += 1;
       }
   }
 }
+
 function proc2(x, y) {
+  console.log("Inside proc2: step: " + step);
+  console.log("Proc2:x=" + x + " y=" + y);
+  switch (clickCount) {
+    case 0:
+      console.log("Proc2: Switch case 0");
+      drawCanvasCalcs();
+      texCanvas.needsUpdate = true;
+      render();
+      console.log("Proc3: After drawCanvasCalcs()");
+      clickCount += 1;
+      break;
+    case 1:
+      if (x > -1.38 && x < -0.4 && y > 1.2 && y < 1.6) {
+        console.log("step 7: detected rect");
+        //clickCount += 1;
+        console.log("inside proc2:case 1");
+        var answer = getAnswer();
+        if (answer != null) {
+          drawCanvasCalcs(answer);
+          texCanvas.needsUpdate = true;
+          render();
+          if (doneFlag) {
+            clickCount += 1;
+          }
+        }
+      }
+      break;
+    case 2:
+      if (intersects[0].object.name == "button2" && doneFlag == true) {
+        console.log("Go to next step");
+        text = [
+          "Focal Length",
+          "The focal length is 10 cms.",
+          "Next we study the nature of image",
+          "at various positions of objects from",
+          "the lens.",
+          "Click on arrow button to proceed",
+        ];
+        drawCanvasText(text);
+        texCanvas.needsUpdate = true;
+        render();
+        clickCount += 1;
+      }
+    case 3:
+      if (intersects[0].object.name == "button2" && doneFlag == true) {
+        step += 1;
+        clickCount = 0;
+        proc3();
+      }
+  }
+}
+function proc3(x, y) {
   var isAnswer;
   switch (clickCount) {
     case 0:
       isAnswer = false;
       controlsDM.activate();
-
       var text = [
         "Object less than f(10cms)",
         "Place the candle at a distance less than 10cms from lens",
@@ -1033,6 +1071,15 @@ function proc2(x, y) {
         drawCanvasQuiz(text, isAnswer, 4);
         texCanvas.needsUpdate = true;
         render();
+      }
+      break;
+    case 8:
+      clickCount = 0;
+      step += 1;
+      if (intersects.length > 0) {
+        if (intersects[0].object.name == "button2") {
+          summary();
+        }
       }
   }
 }
@@ -1533,24 +1580,28 @@ function drawCanvasCalcs(answer) {
   ctx.stroke();
   if (clickCount == 0) {
     var text1 = "Calculate the mean focal length";
-    var text2 = "Click on the box and enter the length";
+    var text2 = "Click on the box and enter the f.l.";
   }
   if (clickCount == 1) {
     if (answer == fl) {
       if (answer >= 9 && answer <= 11) {
         score += 1;
         doneFlag = true;
-        text1 = "The focal length of the lens is correct";
-        text2 = "Click on the arrow button for the summary";
+        ctx.fillStyle = "green";
+        text1 = "The calculated Focal length is " + answer;
+        text2 = "Click the arrow button to proceed further";
       } else {
+        ctx.fillStyle = "red";
         text1 = "The focal length is not correct";
         text2 = "Refresh the page and redo the experiment";
       }
     } else {
+      ctx.fillStyle = "red";
       text1 = "The calculation is not correct check again";
       text2 = "Recalculate and enter value again";
-      clickCount = 1;
-      proc3();
+
+      //clickCount = 1;
+      //proc3();
     }
   }
   y += 50;
@@ -1645,7 +1696,7 @@ function getAnswer() {
       return answer;
     }
   }
-  if (step == 7) {
+  if (step == 6) {
     answer = prompt("Enter the calculated focal length");
     if (isNaN(answer)) {
       alert("Only numbers allowed");
@@ -1659,6 +1710,53 @@ function getAnswer() {
   }
 }
 
+function summary() {
+  console.log("Summary");
+  switch (clickCount) {
+    case 0:
+      camera.position.set(0, 0, 1);
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      text = [
+        "Obj. position",
+        "Img. position",
+        "Img. size",
+        "Obj. size",
+        "< f",
+        "object side",
+        "Enlarged",
+        "virtual",
+        "at f",
+        "at infinity",
+        "highly enlargd",
+        "Real",
+        ">f<2f",
+        "beyond f",
+        "Enlarged",
+        "Real",
+        "at 2f",
+        "at 2f",
+        "object size",
+        "Real",
+        ">2f",
+        ">f<2f",
+        "Diminished",
+        "Real",
+      ];
+      var i, j;
+      var count = 0;
+      for (i = 0; i <= 5; i++) {
+        for (j = 0; j <= 3; j++) {
+          readings[i][j] = text[count];
+          count++;
+        }
+      }
+      console.log("summary: Switch case 0");
+      drawCanvasTable(5, 3, "Result");
+      texCanvas.needsUpdate = true;
+      render();
+      console.log("summary: after summary table");
+  }
+}
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);

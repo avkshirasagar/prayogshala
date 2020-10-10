@@ -59,6 +59,7 @@ var highlightRow = 1;
 var highlightColumn = 0;
 var getReading = false;
 var doneFlag = false;
+var readingCords;
 
 var canvasScreen = document.createElement("canvas");
 var ctx = canvasScreen.getContext("2d");
@@ -142,7 +143,7 @@ function init() {
             "     Click on the -> button to proceed.",
           ];
 
-          drawCanvasText(textAim);
+          drawCanvasText(textAim, 15);
 
           // canvas contents will be used for a texture
           texCanvas = new THREE.CanvasTexture(ctx.canvas);
@@ -378,6 +379,7 @@ function init() {
   score = 0;
   console.log("init: score: " + score + "step= " + step);
   renderer.domElement.addEventListener("mousedown", onClick);
+  //renderer.domElement.addEventListener("touchstart", onTouch);
   controls = new OrbitControls(camera, renderer.domElement);
   controls.addEventListener("change", render); // use if there is no animation loop
   controls.minDistance = 2;
@@ -410,8 +412,124 @@ function init() {
   });
 
   controlsDM.deactivate();
+  InitializeReadingCords(-4.51, 2.26);
 }
 
+function apparatus(aparatus) {
+  switch (clickCount) {
+    case 0:
+      console.log("inside apparatus:score: " + score + "step: " + step);
+      textStep = [
+        "Apparatus",
+        "Identify the apparatus:",
+        "(Click on the apparatus mentioned below)",
+        "1. Candle",
+        "2. Board",
+        "3. Measuring scale",
+        "4. Convex Lens",
+        "5. Convex Lens stand",
+      ];
+      clickCount += 1;
+      text = textStep.slice(0, 4);
+      camera.position.set(0, 5, 8.5);
+      break;
+    case 1:
+      if (aparatus == "candle") {
+        text = textStep.slice(0, 5);
+        score += 1;
+        clickCount += 1;
+      }
+      break;
+    case 2:
+      if (aparatus == "board") {
+        text = textStep.slice(0, 6);
+        score += 1;
+        clickCount += 1;
+      }
+      break;
+    case 3:
+      if (aparatus == "scale") {
+        text = textStep.slice(0, 7);
+        score += 1;
+        clickCount += 1;
+      }
+      break;
+    case 4:
+      if (aparatus == "lens") {
+        text = textStep.slice(0, 8);
+        score += 1;
+        clickCount += 1;
+      }
+      break;
+    case 5:
+      if (aparatus == "lensStand") {
+        text = [
+          "Apparatus",
+          "",
+          "Apparatus identification is completed.",
+          "",
+          "",
+          "Please click on the arrow button to",
+          "proceed to setup",
+        ];
+        score += 1;
+        clickCount += 1;
+      }
+      break;
+    case 6:
+      if (aparatus == "button2") {
+        step += 1;
+        clickCount = 0;
+        setup1();
+      }
+  }
+  drawCanvasText(text, 15);
+  texCanvas.needsUpdate = true;
+  render();
+}
+
+function setup1() {
+  controlsDM.activate();
+
+  console.log("setup1:step: " + step);
+
+  text = [
+    "Setup",
+    "1. Make sure the candle, lens stand",
+    "and the center of board are in",
+    "straight line",
+    "Drag the candle backward and forward",
+    "to keep in correct position.",
+    "Your score will increment if you place the",
+    "candle in correct position",
+  ];
+  centerLine.visible = true;
+  //clickCount = 5;
+  camera.position.set(-8, 1, 7);
+  camera.rotation.y -= (30 * Math.PI) / 180;
+  //canvasText(text);
+  drawCanvasText(text, 15);
+  texCanvas.needsUpdate = true;
+  render();
+}
+
+function onTouch(event) {
+  console.log("On TOUCH detected");
+  var vec = new THREE.Vector3(); // create once and reuse
+  var pos = new THREE.Vector3(); // create once and reuse
+
+  vec.set(
+    (event.targetTouches[0].clientX / window.innerWidth) * 2 - 1,
+    -(event.targetTouches[0].clientY / window.innerHeight) * 2 + 1,
+    0.5
+  );
+  vec.unproject(camera);
+  vec.sub(camera.position).normalize();
+  var distance = -camera.position.z / vec.z;
+
+  pos.copy(camera.position).add(vec.multiplyScalar(distance));
+  console.log("Finding Lepord: pos.x: " + pos.x + "pos.y: " + pos.y);
+}
 function onClick(event) {
   console.log("inside click event");
   var vec = new THREE.Vector3(); // create once and reuse
@@ -427,13 +545,548 @@ function onClick(event) {
   var distance = -camera.position.z / vec.z;
 
   pos.copy(camera.position).add(vec.multiplyScalar(distance));
-  mouse.x = pos.x;
-  mouse.y = pos.y;
-  console.log("Finding Nemo: pos.x: " + pos.x + "pos.y: " + pos.y);
-  console.log("Finding Nemo: mouse.x: " + mouse.x + "mouse.y: " + mouse.y);
+  console.log("Nemo: pos.x: " + pos.x + "pos.y: " + pos.y);
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  //console.log("x-cordinate: " + mouse.x);
+  //console.log("y cordinate: " + mouse.y);
+
+  raycaster.setFromCamera(mouse, camera);
+  var intersectionObjects = [];
+  intersects.length = 0;
+  intersectionObjects = [
+    objectButton1,
+    objectButton2,
+    objectScreen,
+    objectCandle,
+    objectBoard,
+    objectScale,
+    objectLens,
+    objectlensStand,
+  ];
+  intersects = raycaster.intersectObjects(intersectionObjects, true);
+  console.log("OnClick: Checking step: " + step);
+  if (step == 1) {
+    if (intersects.length > 0) {
+      /*console.log(
+        "step1: intersect[0] object name: " + intersects[0].object.name
+      );
+      console.log("object clicked: " + intersects[0].object.name);*/
+      if (intersects[0].object.name == "button2") {
+        clickCount = 0;
+        step += 1;
+        apparatus();
+      }
+    }
+  } else if (step == 2) {
+    /*console.log(
+      "Onclick: step 2:clickCount: " +
+        clickCount +
+        " object: " +
+        intersects[0].object.name
+    );*/
+    apparatus(intersects[0].object.name);
+  } else if (step == 4) {
+    setup2(intersects[0].object.name);
+  } else if (step == 5) {
+    /*console.log("OnClick: Step5: calling proc1: clickCount: " + clickCount);*/
+    proc1(pos.x, pos.y);
+  }
 }
 
-function drawCanvasText(text) {
+function setup2(clickedObject) {
+  switch (clickCount) {
+    case 0:
+      step += 1;
+      clickCount += 1;
+      /*console.log(
+        "inside setup2: switch 0: step: " +
+          step +
+          " clickedCount after increment: " +
+          clickCount
+      );*/
+      text = [
+        "Setup",
+        "2. The center of the lens, the tip of",
+        "candle flame and the center of screen",
+        "should lie in straight line and parallel",
+        "to the measuring scale",
+        "Click on lens stand to adjust the height",
+        "of the lens stand",
+      ];
+      centerLine.visible = false;
+      topLine.visible = true;
+      camera.position.set(0, 5, 8);
+      camera.rotation.y += (30 * Math.PI) / 180;
+      drawCanvasText(text, 15);
+      texCanvas.needsUpdate = true;
+      render();
+      break;
+    case 1:
+      if (clickedObject == "lensStand") {
+        console.log("Step4 inside lens stand: " + clickedObject);
+        objectlensStand.scale.y = 0.349;
+        objectlensStand.position.set(-0.0377, 2.3972, 0);
+        objectLensHolder.position.set(0, 3, 0);
+        objectLens.position.set(0, 3.4, 0);
+        ToplineVertices = new Float32Array([
+          objectLens.position.x - 5,
+          objectLens.position.y,
+          objectLens.position.z,
+          objectLens.position.x + 5,
+          objectLens.position.y,
+          objectLens.position.z,
+        ]);
+        TopLinepositionAttribute = new THREE.Float32BufferAttribute(
+          ToplineVertices,
+          3
+        );
+        TopLinepositionAttribute.setUsage(THREE.DynamicDrawUsage);
+        ToplineGeometry.setAttribute("position", TopLinepositionAttribute);
+        ToplineGeometry.computeBoundingSphere();
+        TopLinepositionAttribute.needsUpdate = true;
+
+        score += 1;
+        clickCount += 1;
+        text = [
+          "Setup",
+          "Set up is successfully completed",
+          "",
+          "In the next step, we will find the focal",
+          "length of the lens.",
+          "",
+          "Now, click on arrow button to proceed",
+        ];
+      }
+      drawCanvasText(text, 15);
+      texCanvas.needsUpdate = true;
+      render();
+      break;
+    case 2:
+      if (clickedObject == "button2") {
+        clickCount = 0;
+        proc1();
+      }
+  }
+}
+function proc1(x, y) {
+  console.log("Inside Proc1:ClickCount: " + clickCount);
+  switch (clickCount) {
+    case 0:
+      initializeReadingArray();
+      topLine.visible = false;
+      Candleline.visible = true;
+      Lensline.visible = true;
+      controlsDM.deactivate();
+      console.log("Proc1:case 0: step: " + step + " clickCount: " + clickCount);
+      step += 1;
+      clickCount += 1;
+      console.log("Proc1:case 0: step: " + step + " clickCount: " + clickCount);
+      text = [
+        "Finding Focal Length",
+        "1. Move candle at a position where image is seen",
+        "2. Move the board till a sharp image is seen.",
+        "3. Input object distance and image distance",
+        "by clicking on the cell in the table",
+        "5. Calculate the focal length using formula",
+        "6. Input focal length in the table",
+        "Click on arrow button to take readings",
+      ];
+      camera.near = 1;
+      camera.position.set(-4, 3, 7);
+
+      camera.rotation.y -= 6 * (Math.PI / 180);
+      console.log("inside proc 1");
+      drawCanvasText(text, 12);
+      texCanvas.needsUpdate = true;
+      render();
+      break;
+    case 1:
+      if (intersects[0].object.name == "button2") {
+        controlsDM.activate();
+        //camera.near = 1;
+        //camera.position.set(0, 3, 7);
+        //camera.rotation.y += 9 * (Math.PI / 180);
+        //camera.rotation.y -= 2 * (Math.PI / 180);
+        drawCanvasTable(5, 2, "Readings");
+        texCanvas.needsUpdate = true;
+        render();
+        console.log(
+          "Proc2:step: " +
+            step +
+            " :clickcount: " +
+            clickCount +
+            " :score: " +
+            score
+        );
+        clickCount += 1;
+      }
+      break;
+    case 2:
+      if (intersects[0].object.name == "tvscreen") {
+        console.log("Proc1: step: " + step + " clickcount" + clickCount);
+        var x_min;
+        var x_max;
+        var y_min;
+        var y_max;
+        var i, j;
+        console.log("Received Co-ords: x=" + x + ", y=" + y);
+        (function () {
+          for (i = 0; i <= 4; i++) {
+            for (j = 0; j <= 2; j++) {
+              if (readingCords[i][j][0] < 0) {
+                x_min = readingCords[i][j][0] - 0.9;
+                x_max = readingCords[i][j][0] + 0.9;
+              } else if (readingCords[i][j][0] > 0) {
+                x_min = readingCords[i][j][0] - 0.9;
+                x_max = readingCords[i][j][0] + 0.9;
+              }
+              if (readingCords[i][j][1] < 0) {
+                y_min = readingCords[i][j][1] + 0.16;
+                y_max = readingCords[i][j][1] - 0.16;
+              } else if (readingCords[i][j][1] > 0) {
+                y_min = readingCords[i][j][1] - 0.16;
+                y_max = readingCords[i][j][1] + 0.16;
+              }
+              console.log(
+                "x_min: " +
+                  x_min +
+                  "x_max: " +
+                  x_max +
+                  "y_min: " +
+                  y_min +
+                  "y_max: " +
+                  y_max
+              );
+              if (x > x_min && x < x_max && y > y_min && y < y_max) {
+                highlightRow = i + 1;
+                highlightColumn = j;
+                drawCanvasTable(5, 2, "Readings");
+                var answer = getAnswer();
+                if (answer != null) {
+                  readings[highlightRow][highlightColumn] = answer;
+                  drawCanvasTable(5, 2, "Readings");
+                  //clickCount -= 1;
+                }
+                //clickCount += 1;
+                return;
+              }
+            }
+          }
+        })();
+      }
+      break;
+    case 3:
+      console.log(
+        "Proc1: case 3: x_min: " +
+          x_min +
+          "x_max: " +
+          x_max +
+          "y_min: " +
+          y_min +
+          "y_max: " +
+          y_max
+      );
+
+      if (x > x_min && x < x_max && y > y_min && y < y_max) {
+        var answer = getAnswer();
+        if (answer != null) {
+          readings[highlightRow - 1][highlightColumn] = answer;
+          drawCanvasTable(5, 2, "Readings");
+          clickCount -= 1;
+        }
+      }
+  }
+}
+function proc2(x, y) {
+  var isAnswer;
+  switch (clickCount) {
+    case 0:
+      isAnswer = false;
+      controlsDM.activate();
+
+      var text = [
+        "Object less than f(10cms)",
+        "Place the candle at a distance less than 10cms from lens",
+        "Move the board horizontally and observe the image",
+        "How is the image? Click on the correct option:",
+        "Image is NOT seen on the screen",
+        "Image is diminished",
+        "Image is of same height as that of object",
+        "Image is enlarged",
+      ];
+      camera.near = 1;
+      camera.position.set(-4, 3, 7);
+      camera.rotation.y -= 9 * (Math.PI / 180);
+      clickCount += 1;
+      console.log(
+        "Proc1:switch0:step: " +
+          step +
+          " :clickcount: " +
+          clickCount +
+          " :score: " +
+          score
+      );
+      drawCanvasQuiz(text, isAnswer);
+      texCanvas.needsUpdate = true;
+      render();
+      break;
+    case 1:
+      isAnswer = true;
+      controlsDM.deactivate();
+      if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
+        if (y > 1.2 && y < 1.5) {
+          console.log(
+            "proc1:switch1:inside nemo: step: " +
+              step +
+              " clickCount: " +
+              clickCount
+          );
+          score += 1;
+        }
+        var text = [
+          "Object less than f(10cms)",
+          "When the candle is placed at a distance less than f,",
+          "a virtual image is formed on the same side of the object",
+          "Hence, here it is NOT seen on the screen",
+          "Image is NOT seen on the screen",
+          "Image is diminished",
+          "Image is of same height as that of object",
+          "Image is enlarged",
+        ];
+        clickCount += 1;
+        drawCanvasQuiz(text, isAnswer, 4);
+        texCanvas.needsUpdate = true;
+        render();
+      }
+      break;
+    case 2:
+      isAnswer = false;
+      controlsDM.activate();
+      if (intersects.length > 0) {
+        if (intersects[0].object.name == "button2") {
+          var text = [
+            "Object between f and 2f",
+            "Place the candle between 10cms and 20cms from lens",
+            "Move the board horizontally and observe the image",
+            "How is the image? Click on the correct option:",
+            "Image is enlarged and formed at less than 2f",
+            "Image is diminished and formed at 2f",
+            "Image is of same height as that of object",
+            "Image is enlarged and formed beyond 2f",
+          ];
+          clickCount += 1;
+          console.log(
+            "Proc1:switch0:step: " +
+              step +
+              " :clickcount: " +
+              clickCount +
+              " :score: " +
+              score
+          );
+          drawCanvasQuiz(text, isAnswer);
+          texCanvas.needsUpdate = true;
+          render();
+        }
+      }
+      break;
+    case 3:
+      isAnswer = true;
+      controlsDM.deactivate();
+      if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
+        if (y > 0.06 && y < 0.34) {
+          score += 1;
+        }
+        text = [
+          "Object between f and 2f",
+          "When the candle is between 10cms and 20cms from lens",
+          "then an enlarged image is formed on the screen.",
+          "A sharp image is seen at a distance greater than 2f",
+          "Image is enlarged and formed at less than 2f",
+          "Image is diminished and formed at 2f",
+          "Image is of same height as that of object",
+          "Image is enlarged and formed beyond 2f",
+        ];
+        clickCount += 1;
+        drawCanvasQuiz(text, isAnswer, 7);
+        texCanvas.needsUpdate = true;
+        render();
+      }
+      break;
+    case 4:
+      isAnswer = false;
+      controlsDM.activate();
+      if (intersects.length > 0) {
+        if (intersects[0].object.name == "button2") {
+          var text = [
+            "Object on 2f",
+            "Place the candle at 20cms from lens",
+            "Move the board horizontally and observe the image",
+            "How is the image? Click on the correct option:",
+            "Image is diminished and at distance less than 2f",
+            "Image is of same size as that of object and at f",
+            "Image is of same size as that of object and at 2f",
+            "Image is diminished and formed at 2f",
+          ];
+          clickCount += 1;
+          console.log(
+            "Proc1:switch0:step: " +
+              step +
+              " :clickcount: " +
+              clickCount +
+              " :score: " +
+              score
+          );
+          drawCanvasQuiz(text, isAnswer);
+          texCanvas.needsUpdate = true;
+          render();
+        }
+      }
+      break;
+    case 5:
+      isAnswer = true;
+      controlsDM.deactivate();
+      if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
+        if (y > 0.46 && y < 0.72) {
+          score += 1;
+        }
+        text = [
+          "Object on 2f",
+          "When the candle is placed at 20cms from lens then",
+          "an image of same size as that of object is formed ",
+          "at a distance of 2f from the lens",
+          "Image is diminished and at distance less than 2f",
+          "Image is of same size as that of object and at f",
+          "Image is of same size as that of object and at 2f",
+          "Image is diminished and formed at 2f",
+        ];
+        clickCount += 1;
+        console.log(
+          "Proc1:switch3:step: " +
+            step +
+            " :clickcount: " +
+            clickCount +
+            " :score: " +
+            score
+        );
+        drawCanvasQuiz(text, isAnswer, 6);
+        texCanvas.needsUpdate = true;
+        render();
+      }
+      break;
+    case 6:
+      isAnswer = false;
+      controlsDM.activate();
+      if (intersects.length > 0) {
+        if (intersects[0].object.name == "button2") {
+          var text = [
+            "Object is beyond 2f",
+            "Place the candle beyond 20cms from lens",
+            "Move the board horizontally and observe the image",
+            "How is the image? Click on the correct option:",
+            "Image is diminished and formed at less than 2f",
+            "Image is of same size as that of object and at f",
+            "Image is of same size as that of object and at 2f",
+            "Image is diminished and formed at 2f",
+          ];
+          clickCount += 1;
+          console.log(
+            "Proc1:switch0:step: " +
+              step +
+              " :clickcount: " +
+              clickCount +
+              " :score: " +
+              score
+          );
+          drawCanvasQuiz(text, isAnswer);
+          texCanvas.needsUpdate = true;
+          render();
+        }
+      }
+      break;
+    case 7:
+      isAnswer = true;
+      controlsDM.deactivate();
+      if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
+        if (y > 1.18 && y < 1.47) {
+          score += 1;
+        }
+        text = [
+          "Object is beyond 2f",
+          "When the candle is placed beyond 20cms from lens, the image is",
+          "is diminished and formed at less than 2f.",
+          "The further that object, the more the image is diminished.",
+          "Image is diminished and formed at less than 2f",
+          "Image is of same size as that of object and at f",
+          "Image is of same size as that of object and at 2f",
+          "Image is diminished and formed at 2f",
+        ];
+        clickCount += 1;
+        console.log(
+          "Proc1:switch7:step: " +
+            step +
+            " :clickcount: " +
+            clickCount +
+            " :score: " +
+            score
+        );
+        drawCanvasQuiz(text, isAnswer, 4);
+        texCanvas.needsUpdate = true;
+        render();
+      }
+  }
+}
+
+function InitializeReadingCords(x, y) {
+  var x_orig = x;
+  var y_orig = y;
+  var i, j;
+  readingCords = new Array(5);
+  for (i = 0; i < readingCords.length; i++) {
+    readingCords[i] = new Array(3);
+  }
+  for (i = 0; i <= 4; i++) {
+    for (j = 0; j <= 2; j++) {
+      readingCords[i][j] = new Array(2);
+      readingCords[i][j][0] = x;
+      readingCords[i][j][1] = y;
+      x = x + 2.54;
+    }
+    x = x_orig;
+    y = y - 0.5;
+  }
+
+  for (i = 0; i <= 4; i++) {
+    for (j = 0; j <= 2; j++) {
+      console.log(
+        "x=" + readingCords[i][j][0] + "   y=" + readingCords[i][j][1]
+      );
+    }
+  }
+}
+function initializeReadingArray() {
+  var i, j;
+  readings = new Array(6);
+  for (i = 0; i < readings.length; i++) {
+    readings[i] = new Array(3);
+  }
+
+  readings[0][0] = "Object position";
+  readings[0][1] = "Image distance";
+  readings[0][2] = "focal length";
+
+  for (i = 1; i <= 5; i++) {
+    for (j = 0; j <= 2; j++) {
+      readings[i][j] = "0";
+    }
+  }
+  for (i = 0; i <= 4; i++) {
+    for (j = 0; j <= 2; j++) {
+      console.log(readings[i][j]);
+    }
+  }
+}
+function drawCanvasText(text, fontSize) {
   var i, j;
   var x = 5;
   var y = 5;
@@ -442,8 +1095,8 @@ function drawCanvasText(text) {
   ctx.strokeStyle = "black";
   ctx.fillStyle = "black";
   ctx.lineWidth = 1;
-  ctx.font = " Bold 15px segoe UI";
-  //ctx.font = " Bold 15px Microsoft Sans Serif";
+  var font = "Bold " + fontSize + "px segoe UI";
+  ctx.font = "Bold 15px segoe UI";
   ctx.strokeRect(x, y, 290, 20);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -460,7 +1113,7 @@ function drawCanvasText(text) {
   var rowWidth = 96.6;
   var rowHeight = 20;
   ctx.textAlign = "left";
-  //ctx.font = " Bolder 14px Comic Sans MS";
+  ctx.font = font;
   for (i = 1; i <= text.length - 1; i++) {
     ctx.fillText(text[i], x, y);
     ctx.stroke();
@@ -491,6 +1144,7 @@ function onDragEvent(e) {
         objectFlame.position.z = 0;
         controlsDM.deactivate();
         controls.enabled = false;
+        clickCount = 0;
         setup2();
       } else {
         objectCandle.position.z = e.object.position.z;
@@ -726,6 +1380,283 @@ function updateLineVertices(position) {
   positionAttribute = new THREE.Float32BufferAttribute(CandlelineVertices, 3);
   CandlelineGeometry.setAttribute("position", positionAttribute);
   CandlelineGeometry.computeBoundingSphere();
+}
+
+function drawCanvasQuiz(text, isAnswer, AnswerRow) {
+  var i, j;
+  var x = 5;
+  var y = 5;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvasScreen.width, canvasScreen.height);
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 1;
+  ctx.font = " Bold 15px segoe UI";
+  //ctx.font = " Bold 15px Microsoft Sans Serif";
+  ctx.strokeRect(x, y, 290, 20);
+
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "start";
+  ctx.fillText(text[0], x, y + 10);
+
+  ctx.textAlign = "end";
+  ctx.fillStyle = "red";
+  ctx.fillText("Score:" + score, canvasScreen.width - 8, y + 10);
+  ctx.stroke();
+  ctx.font = "Bold 10px segoe UI";
+  ctx.fillStyle = "black";
+  var leftSpace = 5;
+  x = leftSpace;
+  y = 40;
+  var rowWidth = 96.6;
+  var rowHeight = 15;
+  ctx.textAlign = "left";
+  //ctx.font = " Bolder 14px Comic Sans MS";
+  for (i = 1; i <= 3; i++) {
+    ctx.fillText(text[i], x, y);
+    ctx.stroke();
+    y += 15;
+  }
+
+  ctx.textAlign = "center";
+  for (i = 4; i <= 7; i++) {
+    if (isAnswer && i == AnswerRow) {
+      ctx.fillStyle = "green";
+      ctx.font = "Bold 12px segoe UI";
+    } else {
+      ctx.fillStyle = "black";
+      ctx.font = "Bold 10px segoe UI";
+    }
+    ctx.strokeRect(x, y, 290, rowHeight);
+    ctx.fillText(text[i], canvasScreen.width / 2, y + rowHeight / 2);
+    y += rowHeight;
+  }
+}
+
+function drawCanvasTable(max_row, max_col, title) {
+  var i, j;
+  var x = 5;
+  var y = 5;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvasScreen.width, canvasScreen.height);
+  //ctx.fillStyle = "blue";
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 1;
+  ctx.font = " Bold 15px segoe UI";
+  ctx.strokeRect(x, y, 290, 20);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(title + "       Score:" + score, canvasScreen.width / 2, y + 10);
+  //ctx.textAlign = "end";
+  //ctx.fillText("Score:" + score, canvasScreen.width / 2, y + 10);
+  ctx.stroke();
+  var leftSpace = 5;
+  x = leftSpace;
+  y = 25;
+  var rowWidth = 290 / (max_col + 1);
+  var rowHeight = 20;
+  ctx.font = " Bolder 10px segoe UI";
+
+  for (i = 0; i <= max_row; i++) {
+    for (j = 0; j <= max_col; j++) {
+      console.log("CanvasTable:readings: " + readings[i][j]);
+      ctx.strokeRect(x, y, rowWidth, rowHeight);
+      ctx.fillText(readings[i][j], x + rowWidth / 2, y + rowHeight / 2);
+
+      if (i == highlightRow && j == highlightColumn) {
+        console.log("CanvasTable:highlight cell: readings: " + readings[i][j]);
+        //ctx.fillStyle = "grey";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x, y, rowWidth, rowHeight);
+        //ctx.fillStyle = "black";
+        ctx.lineWidth = 1;
+      }
+      ctx.stroke();
+      x = x + rowWidth;
+      //console.log("drawtable:x: " + x + " y: " + y);
+    }
+    x = leftSpace;
+    y = y + rowHeight;
+  }
+  texCanvas.needsUpdate = true;
+  render();
+}
+
+function drawCanvasCalcs(answer) {
+  var i, j;
+  var calcStr = "Mean F.L. = (";
+  var x = 5;
+  var y = 5;
+  var rowWidth = 290;
+  var rowHeight = 20;
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvasScreen.width, canvasScreen.height);
+  //ctx.fillStyle = "blue";
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 1;
+  ctx.font = " Bold 15px segoe UI";
+  ctx.strokeRect(x, y, rowWidth, rowHeight);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    "Calculations     Score:" + score,
+    canvasScreen.width / 2,
+    y + rowHeight / 2
+  );
+  ctx.stroke();
+  y = y + rowHeight + 5;
+  var fl = 0;
+  for (i = 1; i <= 5; i++) {
+    calcStr = calcStr + readings[i][2] + "+";
+    fl = fl + Number(readings[i][2]);
+  }
+  fl = fl / 5;
+  console.log("Calculated focal length: " + fl);
+  calcStr = calcStr.slice(0, -1);
+  calcStr = calcStr + ")/5";
+  console.log("calcStr: " + calcStr);
+
+  ctx.strokeRect(x, y, rowWidth, 2 * rowHeight);
+  ctx.fillText(calcStr, x + rowWidth / 2, y + rowHeight);
+  ctx.stroke();
+  y += 40;
+  ctx.textAlign = "left";
+  ctx.strokeRect(x, y, rowWidth, 2 * rowHeight);
+  ctx.strokeRect(x + 160, y + 8, 50, rowHeight);
+  ctx.fillText("Mean Focal Length = ", x + 5, y + rowHeight);
+  if (clickCount == 1) {
+    console.log("drawCanvasCals: inside clickcount 1");
+    ctx.fillText(answer, x + 175, y + rowHeight);
+  }
+  ctx.stroke();
+  if (clickCount == 0) {
+    var text1 = "Calculate the mean focal length";
+    var text2 = "Click on the box and enter the length";
+  }
+  if (clickCount == 1) {
+    if (answer == fl) {
+      if (answer >= 9 && answer <= 11) {
+        score += 1;
+        doneFlag = true;
+        text1 = "The focal length of the lens is correct";
+        text2 = "Click on the arrow button for the summary";
+      } else {
+        text1 = "The focal length is not correct";
+        text2 = "Refresh the page and redo the experiment";
+      }
+    } else {
+      text1 = "The calculation is not correct check again";
+      text2 = "Recalculate and enter value again";
+      clickCount = 1;
+      proc3();
+    }
+  }
+  y += 50;
+  ctx.textAlign = "center";
+  ctx.fillText(text1, canvasScreen.width / 2, y);
+  y += 20;
+  ctx.fillText(text2, canvasScreen.width / 2, y);
+  ctx.stroke();
+
+  texCanvas.needsUpdate = true;
+  render();
+}
+
+function drawCanvasCamera(canvasCam, ctxCamera) {
+  //Draw camera
+  ctxCamera.fillStyle = "white";
+  ctxCamera.fillRect(0, 0, canvasCam.width, canvasCam.height);
+  ctxCamera.strokeStyle = "black";
+  ctxCamera.fillStyle = "black";
+  ctxCamera.lineWidth = 10;
+  var x = 40;
+  var y = 20;
+  //ctxCamera.strokeRect(x, y, 100, 50);
+  ctxCamera.fillRect(x, y, 130, 100);
+  ctxCamera.beginPath();
+  ctxCamera.moveTo(x + 130, y + 20);
+  ctxCamera.lineTo(x + 200, y);
+  ctxCamera.lineTo(x + 200, y + 100);
+  ctxCamera.lineTo(x + 130, y + 80);
+
+  ctxCamera.fill();
+  ctxCamera.stroke();
+  /*ctxCamera.lineTo(x + 20, y + 15);
+  ctxCamera.lineTo(x + 15, y + 10);
+  ctxCamera.stroke();
+  ctxCamera.moveTo(x + 3, y + 3);
+  ctxCamera.lineTo(x + 12, y + 7);
+  ctxCamera.lineTo(x + 3, y + 12);
+  ctxCamera.lineTo(x + 3, y + 3);
+  ctxCamera.fill();*/
+}
+function drawCanvasProceed(canvasProceed, ctxProceed) {
+  //Draw Proceed
+  ctxProceed.fillStyle = "white";
+  ctxProceed.fillRect(0, 0, canvasProceed.width, canvasProceed.height);
+  ctxProceed.strokeStyle = "black";
+  ctxProceed.fillStyle = "black";
+  ctxProceed.lineWidth = 10;
+  var x = 30;
+  var y = 45;
+  //ctxProceed.strokeRect(x, y, 100, 60);
+  ctxProceed.fillRect(x, y, 120, 60);
+  ctxProceed.beginPath();
+  ctxProceed.moveTo(x + 120, y - 40);
+  ctxProceed.lineTo(x + 250, y + 30);
+  ctxProceed.lineTo(x + 120, y + 90);
+  ctxProceed.lineTo(x + 120, y - 40);
+  ctxProceed.fill();
+  ctxProceed.stroke();
+}
+
+function getAnswer() {
+  var answer;
+  if (step == 5) {
+    console.log("getanswer:highlightcolumn: " + highlightColumn);
+    if (highlightColumn == 0) {
+      answer = prompt("Object distance");
+    } else if (highlightColumn == 1) {
+      answer = prompt("Image distance");
+    } else if (highlightColumn == 2) {
+      answer = prompt("focal length");
+    }
+    if (isNaN(answer)) {
+      alert("Only numbers allowed");
+      return null;
+    } else if (answer.length > 4) {
+      alert("Only 4 characters allowed");
+      return null;
+    } else if (!Boolean(answer)) {
+      return null;
+    } else if (highlightColumn == 0 && (answer < 11 || answer > 42)) {
+      alert("Invalid object distance");
+      return null;
+    } else if (highlightColumn == 1 && (answer < 5 || answer > 45)) {
+      console.log("Inside image answer: answer: " + answer);
+      alert("Invalid image distance");
+      return null;
+    } else if (highlightColumn == 2 && (answer < 9 || answer > 11)) {
+      alert("focal length calculation may be wrong. Please recheck");
+      return null;
+    } else {
+      return answer;
+    }
+  }
+  if (step == 7) {
+    answer = prompt("Enter the calculated focal length");
+    if (isNaN(answer)) {
+      alert("Only numbers allowed");
+      return null;
+    } else if (answer.length > 4) {
+      alert("Only 4 characters allowed");
+      return null;
+    } else {
+      return answer;
+    }
+  }
 }
 
 function animate() {

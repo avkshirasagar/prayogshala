@@ -598,7 +598,12 @@ function onClick(event) {
   } else if (step == 6) {
     proc2(pos.x, pos.y);
   } else if (step == 7) {
+    console.log("calling proc3 from click event: clickCount: "+clickCount)
     proc3(pos.x, pos.y);
+  }
+  else if(step == 8){
+    console.log("Inside step 8: calling result: clickCount: "+clickCount)
+    result(pos.x,pos.y)
   }
 }
 
@@ -866,9 +871,11 @@ function proc2(x, y) {
   }
 }
 function proc3(x, y) {
+  console.log("Inside proc3:step: "+step+" clickcount: "+clickCount)
   var isAnswer;
   switch (clickCount) {
     case 0:
+      console.log("proc3: case 0 step: "+step)
       isAnswer = false;
       controlsDM.activate();
       var text = [
@@ -886,7 +893,7 @@ function proc3(x, y) {
       camera.rotation.y -= 9 * (Math.PI / 180);
       clickCount += 1;
       console.log(
-        "Proc1:switch0:step: " +
+        "Proc3:switch0:step: " +
           step +
           " :clickcount: " +
           clickCount +
@@ -897,38 +904,38 @@ function proc3(x, y) {
       texCanvas.needsUpdate = true;
       render();
       break;
-    case 1:
-      isAnswer = true;
-      controlsDM.deactivate();
-      if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
+      case 1:
+        if (intersects[0].object.name == "tvscreen"){
+        if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
         if (y > 1.2 && y < 1.5) {
+          score += 1;
+        }
+          isAnswer = true;
+            var text = [
+              "Object less than f(10cms)",
+              "When the candle is placed at a distance less than f,",
+              "a virtual image is formed on the same side of the object",
+              "Hence, here it is NOT seen on the screen",
+              "Image is NOT seen on the screen",
+              "Image is diminished",
+              "Image is of same height as that of object",
+              "Image is enlarged",
+            ];
+          clickCount += 1;
+          drawCanvasQuiz(text, isAnswer, 4);
+          texCanvas.needsUpdate = true;
+          render();
           console.log(
-            "proc1:switch1:inside nemo: step: " +
+            "proc3:switch1:inside nemo: step: " +
               step +
               " clickCount: " +
               clickCount
           );
-          score += 1;
         }
-        var text = [
-          "Object less than f(10cms)",
-          "When the candle is placed at a distance less than f,",
-          "a virtual image is formed on the same side of the object",
-          "Hence, here it is NOT seen on the screen",
-          "Image is NOT seen on the screen",
-          "Image is diminished",
-          "Image is of same height as that of object",
-          "Image is enlarged",
-        ];
-        clickCount += 1;
-        drawCanvasQuiz(text, isAnswer, 4);
-        texCanvas.needsUpdate = true;
-        render();
-      }
-      break;
+    }
+    break;
     case 2:
       isAnswer = false;
-      controlsDM.activate();
       if (intersects.length > 0) {
         if (intersects[0].object.name == "button2") {
           var text = [
@@ -943,7 +950,7 @@ function proc3(x, y) {
           ];
           clickCount += 1;
           console.log(
-            "Proc1:switch0:step: " +
+            "Proc3:switch0:step: " +
               step +
               " :clickcount: " +
               clickCount +
@@ -958,11 +965,10 @@ function proc3(x, y) {
       break;
     case 3:
       isAnswer = true;
-      controlsDM.deactivate();
       if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
-        if (y > 0.06 && y < 0.34) {
+        if (y > 0.06 && y < 0.34) { 
           score += 1;
-        }
+        }         
         text = [
           "Object between f and 2f",
           "When the candle is between 10cms and 20cms from lens",
@@ -977,11 +983,10 @@ function proc3(x, y) {
         drawCanvasQuiz(text, isAnswer, 7);
         texCanvas.needsUpdate = true;
         render();
-      }
+    }
       break;
     case 4:
       isAnswer = false;
-      controlsDM.activate();
       if (intersects.length > 0) {
         if (intersects[0].object.name == "button2") {
           var text = [
@@ -996,7 +1001,7 @@ function proc3(x, y) {
           ];
           clickCount += 1;
           console.log(
-            "Proc1:switch0:step: " +
+            "Proc3:switch0:step: " +
               step +
               " :clickcount: " +
               clickCount +
@@ -1011,11 +1016,10 @@ function proc3(x, y) {
       break;
     case 5:
       isAnswer = true;
-      controlsDM.deactivate();
       if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
-        if (y > 0.46 && y < 0.72) {
+        if (y > 0.46 && y < 0.72) {  
           score += 1;
-        }
+        }  
         text = [
           "Object on 2f",
           "When the candle is placed at 20cms from lens then",
@@ -1028,7 +1032,7 @@ function proc3(x, y) {
         ];
         clickCount += 1;
         console.log(
-          "Proc1:switch3:step: " +
+          "Proc3:switch3:step: " +
             step +
             " :clickcount: " +
             clickCount +
@@ -1038,11 +1042,10 @@ function proc3(x, y) {
         drawCanvasQuiz(text, isAnswer, 6);
         texCanvas.needsUpdate = true;
         render();
-      }
+    }
       break;
     case 6:
       isAnswer = false;
-      controlsDM.activate();
       if (intersects.length > 0) {
         if (intersects[0].object.name == "button2") {
           var text = [
@@ -1057,7 +1060,7 @@ function proc3(x, y) {
           ];
           clickCount += 1;
           console.log(
-            "Proc1:switch0:step: " +
+            "Proc3:switch0:step: " +
               step +
               " :clickcount: " +
               clickCount +
@@ -1072,9 +1075,8 @@ function proc3(x, y) {
       break;
     case 7:
       isAnswer = true;
-      controlsDM.deactivate();
       if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
-        if (y > 1.18 && y < 1.47) {
+        if (y > 1.18 && y < 1.47) {    
           score += 1;
         }
         text = [
@@ -1089,7 +1091,7 @@ function proc3(x, y) {
         ];
         clickCount += 1;
         console.log(
-          "Proc1:switch7:step: " +
+          "Proc3:switch7:step: " +
             step +
             " :clickcount: " +
             clickCount +
@@ -1099,14 +1101,14 @@ function proc3(x, y) {
         drawCanvasQuiz(text, isAnswer, 4);
         texCanvas.needsUpdate = true;
         render();
-      }
+    }
       break;
     case 8:
       clickCount = 0;
       step += 1;
       if (intersects.length > 0) {
         if (intersects[0].object.name == "button2") {
-          summary();
+          result();
         }
       }
   }
@@ -1231,13 +1233,14 @@ function onDragEvent(e) {
     }
   }
   if (step >= 5) {
+    console.log("Drag event: step: "+step)
     e.object.position.y = lObjectPositiony;
     e.object.position.z = lObjectPositionz;
     console.log("object that is being dragged: " + e.object.name);
     console.log("object2 is: " + objects[2]);
-    //console.log(
-    //  "object that is being dragged is board?? " + objects[2].getObjectByName()
-    //);
+    console.log(
+      "object that is being dragged is board?? " + objects[2].getObjectByName()
+    );
 
     //Moving sheet with board
     if (e.object == objectBoard) {
@@ -1245,8 +1248,12 @@ function onDragEvent(e) {
       objectSheet.position.x = objectBoard.position.x - 0.25;
       objectSheet.position.y = objectBoard.position.y;
       objectSheet.position.z = objectBoard.position.z;
-      //console.log("board position: " + objectBoard.position.x);
-      //console.log("sheet position: " + objectSheet.position.x);
+      console.log("board position: " + objectBoard.position.x);
+      console.log("sheet position: " + objectSheet.position.x);
+    } else if(e.object == objectSheet){
+      objectBoard.position.x = objectSheet.position.x +0.25;
+      objectBoard.position.y = objectSheet.position.y;
+      objectBoard.position.z = objectSheet.position.z;
     }
     if (e.object == objectCandle) {
       objectFlame.position.x = objectCandle.position.x;
@@ -1763,12 +1770,28 @@ function getAnswer() {
   }
 }
 
-function summary() {
+function result(x,y) {
   console.log("Summary");
   switch (clickCount) {
     case 0:
-      camera.position.set(0, 0, 1);
-      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      console.log("Inside result: step:"+step+" clickcount: "+clickCount)
+      camera.position.set(0, 0, 0.5);
+      camera.rotation.y = 0;
+      //camera.lookAt(new THREE.Vector3(0, 0, 0));
+      text = ["Results",
+      "Now it is time to note the results",
+      "of the observations.", 
+      "In the next step fill the empty cells", 
+      "of the table with correct answers.",
+      "",
+      "Now, Click on arrow key to proceed"
+    ];
+      drawCanvasText(text);
+      texCanvas.needsUpdate = true;
+      render();    
+      clickCount += 1;
+    break;
+    case 1:
       text = [
         "Obj. position",
         "Img. position",
@@ -1776,24 +1799,24 @@ function summary() {
         "Obj. size",
         "< f",
         "object side",
-        "Enlarged",
-        "virtual",
+        "",
+        "",
         "at f",
-        "at infinity",
+        "",
         "highly enlargd",
         "Real",
         ">f<2f",
-        "beyond f",
+        "",
         "Enlarged",
-        "Real",
+        "",
         "at 2f",
-        "at 2f",
+        "",
         "object size",
         "Real",
         ">2f",
         ">f<2f",
-        "Diminished",
-        "Real",
+        "",
+        "",
       ];
       var i, j;
       var count = 0;
@@ -1807,7 +1830,15 @@ function summary() {
       drawCanvasTable(5, 3, "Result");
       texCanvas.needsUpdate = true;
       render();
+      if (intersects[0].object.name == "button2"){
+        clickCount +=1;
+      }
       console.log("summary: after summary table");
+      break;
+      case 3:
+
+
+
   }
 }
 function animate() {

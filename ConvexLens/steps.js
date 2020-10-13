@@ -59,6 +59,8 @@ var highlightRow = 1;
 var highlightColumn = 0;
 var getReading = false;
 var doneFlag = false;
+var redoFlag = false;
+var reCalcFlag = false;
 var readingCords;
 
 var canvasScreen = document.createElement("canvas");
@@ -800,10 +802,13 @@ function proc2(x, y) {
       drawCanvasCalcs();
       texCanvas.needsUpdate = true;
       render();
-      console.log("Proc3: After drawCanvasCalcs()");
+      console.log("Proc2: After drawCanvasCalcs()");
       clickCount += 1;
       break;
     case 1:
+      reCalcFlag = false;
+      redoFlag = false;
+      doneFlag = false;
       if (x > -1.38 && x < -0.4 && y > 1.2 && y < 1.6) {
         console.log("step 7: detected rect");
         //clickCount += 1;
@@ -814,7 +819,9 @@ function proc2(x, y) {
           texCanvas.needsUpdate = true;
           if (doneFlag) {
             console.log("inside proc2:case 1: inside done flag");
-          }else{
+          }
+          if (redoFlag)
+          {
             console.log("inside proc2:case 1: making button1 visible");
             objectButton1.visible = true;
           }
@@ -828,7 +835,7 @@ function proc2(x, y) {
         console.log("Go to next step");
         text = [
           "Focal Length",
-          "The focal length is 10 cms.",
+          "The focal length of this lens is 10 cms.",
           "Next we study the nature of image",
           "at various positions of objects from",
           "the lens.",
@@ -839,12 +846,17 @@ function proc2(x, y) {
         render();
         clickCount += 1;
       }
-      else if(intersects[0].object.name == "button1" && doneFlag == false){
+      else if(intersects[0].object.name == "button1" && redoFlag == true){
         step = 4;
         clickCount = 0;
         objectButton1.visible = false;
         proc1();
       }
+      else if(reCalcFlag == true){ 
+        clickCount = 1;
+        proc2();
+      }
+      break;
     case 3:
       if (intersects[0].object.name == "button2" && doneFlag == true) {
         step += 1;
@@ -1598,28 +1610,27 @@ function drawCanvasCalcs(answer) {
     var text1 = "Calculate the mean focal length";
     var text2 = "Click on the box and enter the f.l.";
   }
-  if (clickCount == 1) {
-    if (answer == fl) {
+  else if (clickCount == 1) {
       if (answer >= 9 && answer <= 11) {
+        if(answer == fl){
         score += 1;
         doneFlag = true;
         ctx.fillStyle = "green";
         text1 = "The calculated Focal length is " + answer;
-        text2 = "Click the arrow button to proceed further";
-      } else {
+        text2 = "Click the arrow button to proceed further"; 
+      } else if (answer != fl){
+        ctx.fillStyle = "red";
+        text1 = "The calculation is not correct check again";
+        text2 = "Recalculate and enter value again";
+        reCalcFlag = true;
+      }
+    }else if (answer < 9 || answer > 11){
         ctx.fillStyle = "red";
         text1 = "The focal length is not correct";
         text2 = "Click on redo button to repeat the readings";
+        redoFlag = true;
       }
-    } else {
-      ctx.fillStyle = "red";
-      text1 = "The calculation is not correct check again";
-      text2 = "Recalculate and enter value again";
-
-      //clickCount = 1;
-      //proc3();
-    }
-  }
+    } 
   y += 50;
   ctx.textAlign = "center";
   ctx.fillText(text1, canvasScreen.width / 2, y);
@@ -1734,6 +1745,7 @@ function getAnswer() {
       alert("focal length calculation may be wrong. Please recheck");
       return null;
     } else {
+      score += 1;
       return answer;
     }
   }

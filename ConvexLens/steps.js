@@ -163,7 +163,8 @@ function init() {
           var canvasCam = document.createElement("canvas");
           var ctxCamera = canvasCam.getContext("2d");
           //Draw camera on canvas
-          drawCanvasCamera(canvasCam, ctxCamera);
+          /*drawCanvasCamera(canvasCam, ctxCamera);*/
+          drawCanvasRedo(canvasCam, ctxCamera);
           var texCamera = new THREE.CanvasTexture(ctxCamera.canvas);
           texCamera.encoding = THREE.sRGBEncoding;
           texCamera.flipY = false;
@@ -321,6 +322,7 @@ function init() {
           topLine.visible = false;
           Candleline.visible = true;
           Lensline.visible = false;
+          objectButton1.visible = false;
           gltf.scene.add(Candleline);
           gltf.scene.add(Lensline);
           gltf.scene.add(centerLine);
@@ -674,7 +676,7 @@ function setup2(clickedObject) {
   }
 }
 function proc1(x, y) {
-  console.log("Inside Proc1:ClickCount: " + clickCount);
+  console.log("Inside Proc1:ClickCount: " + clickCount+" step: "+step);
   switch (clickCount) {
     case 0:
       initializeReadingArray();
@@ -698,8 +700,10 @@ function proc1(x, y) {
       ];
       camera.near = 1;
       camera.position.set(-4, 3, 7);
-
+      console.log("Inside Proc1: Before rotation: camera positions: "+camera.rotation.y)
+      camera.rotation.y =0;
       camera.rotation.y -= 6 * (Math.PI / 180);
+      console.log("Inside Proc1: after rotation: camera positions: "+camera.rotation.y)
       console.log("inside proc 1");
       drawCanvasText(text, 12);
       texCanvas.needsUpdate = true;
@@ -779,8 +783,10 @@ function proc1(x, y) {
           }
         })();
       } else if (intersects[0].object.name == "button2") {
+        console.log("Proc1: button2: step: "+ step+" clockcount= "+clickCount)
         clickCount = 0;
         step += 1;
+        proc2();
       }
   }
 }
@@ -806,12 +812,16 @@ function proc2(x, y) {
         if (answer != null) {
           drawCanvasCalcs(answer);
           texCanvas.needsUpdate = true;
-          render();
           if (doneFlag) {
-            clickCount += 1;
+            console.log("inside proc2:case 1: inside done flag");
+          }else{
+            console.log("inside proc2:case 1: making button1 visible");
+            objectButton1.visible = true;
           }
+          clickCount += 1;
         }
       }
+      render();
       break;
     case 2:
       if (intersects[0].object.name == "button2" && doneFlag == true) {
@@ -828,6 +838,12 @@ function proc2(x, y) {
         texCanvas.needsUpdate = true;
         render();
         clickCount += 1;
+      }
+      else if(intersects[0].object.name == "button1" && doneFlag == false){
+        step = 4;
+        clickCount = 0;
+        objectButton1.visible = false;
+        proc1();
       }
     case 3:
       if (intersects[0].object.name == "button2" && doneFlag == true) {
@@ -1507,12 +1523,12 @@ function drawCanvasTable(max_row, max_col, title) {
 
   for (i = 0; i <= max_row; i++) {
     for (j = 0; j <= max_col; j++) {
-      console.log("CanvasTable:readings: " + readings[i][j]);
+      //console.log("CanvasTable:readings: " + readings[i][j]);
       ctx.strokeRect(x, y, rowWidth, rowHeight);
       ctx.fillText(readings[i][j], x + rowWidth / 2, y + rowHeight / 2);
 
       if (i == highlightRow && j == highlightColumn) {
-        console.log("CanvasTable:highlight cell: readings: " + readings[i][j]);
+        //console.log("CanvasTable:highlight cell: readings: " + readings[i][j]);
         //ctx.fillStyle = "grey";
         ctx.lineWidth = 4;
         ctx.strokeRect(x, y, rowWidth, rowHeight);
@@ -1593,7 +1609,7 @@ function drawCanvasCalcs(answer) {
       } else {
         ctx.fillStyle = "red";
         text1 = "The focal length is not correct";
-        text2 = "Refresh the page and redo the experiment";
+        text2 = "Click on redo button to repeat the readings";
       }
     } else {
       ctx.fillStyle = "red";
@@ -1661,6 +1677,31 @@ function drawCanvasProceed(canvasProceed, ctxProceed) {
   ctxProceed.lineTo(x + 120, y - 40);
   ctxProceed.fill();
   ctxProceed.stroke();
+}
+function drawCanvasRedo(canvasCam, ctxCamera) {
+  //Draw Redo
+  ctxCamera.fillStyle = "white";
+  ctxCamera.fillRect(0, 0, canvasCam.width, canvasCam.height);
+  ctxCamera.strokeStyle = "black";
+  ctxCamera.fillStyle = "black";
+  ctxCamera.lineWidth = 25;
+  var x = 140;
+  var y = 50;
+  var center_x = 130;
+  var center_y = 70;
+  var radius = 60;
+  ctxCamera.beginPath();
+  ctxCamera.arc(center_x,center_y, radius, 0.1*Math.PI, 1.8*Math.PI);
+  ctxCamera.stroke();
+  //ctxCamera.strokeRect(x, y, 100, 60);
+  /*ctxCamera.fillRect(x, y, 120, 60);*/
+  //ctxCamera.beginPath();
+  ctxCamera.lineTo(x, y-10);
+  ctxCamera.lineTo(x + 50, y + 10);
+  ctxCamera.lineTo(x + 60, y -15);
+  ctxCamera.lineTo(x, y - 10);
+  //ctxCamera.fill();*/
+  ctxCamera.stroke();
 }
 
 function getAnswer() {

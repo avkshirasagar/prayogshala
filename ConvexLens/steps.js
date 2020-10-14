@@ -96,7 +96,17 @@ function init() {
   camera1.copy(camera,true);
   scene = new THREE.Scene();
 
-  new RGBELoader()
+  const loadingManager = new THREE.LoadingManager( () => {
+	
+		const loadingScreen = document.getElementById( 'loading-screen' );
+		loadingScreen.classList.add( 'fade-out' );
+		
+		// optional: remove loader from DOM via event listener
+		loadingScreen.addEventListener( 'transitionend', onTransitionEnd );
+		
+	} );
+
+  new RGBELoader(loadingManager)
     .setDataType(THREE.UnsignedByteType)
     .setPath("images/")
     .load("equirectangular_room.hdr", function (texture) {
@@ -424,6 +434,12 @@ function init() {
 
   controlsDM.deactivate();
   InitializeReadingCords(-4.51, 2.26);
+}
+
+function onTransitionEnd( event ) {
+
+	event.target.remove();
+	
 }
 
 function apparatus(aparatus) {

@@ -9,7 +9,7 @@ import { TextureLoader } from "https://unpkg.com/three@0.120.1/src/loaders/Textu
 import { Line } from "https://unpkg.com/three@0.120.1/src/objects/Line.js";
 
 var container, controls, controlsDM;
-var camera, scene, renderer, gltf;
+var camera, scene, renderer, gltf, camera1;
 var objects = [];
 var mouse = new THREE.Vector2();
 var objectBoard;
@@ -62,6 +62,7 @@ var doneFlag = false;
 var redoFlag = false;
 var reCalcFlag = false;
 var readingCords;
+var answered = [false,false,false,false,false,false,false]
 
 var canvasScreen = document.createElement("canvas");
 var ctx = canvasScreen.getContext("2d");
@@ -82,11 +83,17 @@ function init() {
     5,
     1000
   );
+  camera1 = new THREE.PerspectiveCamera(
+    100,
+    window.innerWidth / window.innerHeight,
+    5,
+    1000
+  );
   camera.position.set(0, 0, 1);
   //camera.rotation.z = (90 * Math.PI) / 180; */
   //camera.position.set(0, 0, 90);
-  camera.lookAt(new THREE.Vector3(0, 0, 0));
-
+  //camera.lookAt(new THREE.Vector3(0, 0, 0));
+  camera1.copy(camera,true);
   scene = new THREE.Scene();
 
   new RGBELoader()
@@ -428,7 +435,7 @@ function apparatus(aparatus) {
         "Identify the apparatus:",
         "(Click on the apparatus mentioned below)",
         "1. Candle",
-        "2. Board",
+        "2. Board with white sheet paper",
         "3. Measuring scale",
         "4. Convex Lens",
         "5. Convex Lens stand",
@@ -1117,7 +1124,7 @@ function proc3(x, y) {
 function InitializeReadingCords(x, y) {
   var x_orig = x;
   var y_orig = y;
-  var i, j;
+  var    i, j;
   readingCords = new Array(5);
   for (i = 0; i < readingCords.length; i++) {
     readingCords[i] = new Array(3);
@@ -1768,19 +1775,85 @@ function getAnswer() {
       return answer;
     }
   }
+  if(step == 8){
+    if(highlightRow == 1 && highlightColumn == 2){
+      answer = prompt("options: enlarged/diminished/same size");
+      if (answer.toLowerCase() == "enlarged" || answer.toLowerCase() == "diminished" || answer.toLowerCase() == "same size"){
+        return answer.toLowerCase();
+      }else{
+        alert("Answer is invalid. Select among the given options");
+        return null;
+      }
+  } else if(highlightRow == 1 && highlightColumn == 3){
+    answer = prompt("options: real/virtual/unpredictable");
+      if (answer.toLowerCase() == "real" || answer.toLowerCase() == "virtual" || answer.toLowerCase() == "unpredictable"){
+        return answer.toLowerCase();
+      }else{
+        alert("Answer is invalid. Select among the given options");
+        return null;
+      }
+    } else if(highlightRow == 2 && highlightColumn == 1){
+      answer = prompt("options: at 2f/ at infinity/object side");
+        if (answer.toLowerCase() == "at 2f" || answer.toLowerCase() == "at infinity" || answer.toLowerCase() == "object side"){
+          return answer.toLowerCase();
+        }else{
+          alert("Answer is invalid. Select among the given options");
+          return null;
+        }
+      }else if(highlightRow == 3 && highlightColumn == 1){
+        answer = prompt("options: at 2f/beyond f/at infinity");
+          if (answer.toLowerCase() == "at 2f" || answer.toLowerCase() == "beyond f" || answer.toLowerCase() == "at infinity"){
+            return answer.toLowerCase();
+          }else{
+            alert("Answer is invalid. Select among the given options");
+            return null;
+          }
+        }else if(highlightRow == 3 && highlightColumn == 3){
+          answer = prompt("options: real/virtual/cannot say");
+            if (answer.toLowerCase() == "real" || answer.toLowerCase() == "virtual" || answer.toLowerCase() == "cannot say"){
+              return answer.toLowerCase();
+            }else{
+              alert("Answer is invalid. Select among the given options");
+              return null;
+            }
+          } else if(highlightRow == 4 && highlightColumn == 1){
+            answer = prompt("options: at 2f/beyond f/at infinity");
+              if (answer.toLowerCase() == "at 2f" || answer.toLowerCase() == "beyond f" || answer.toLowerCase() == "at infinity"){
+                return answer.toLowerCase();
+              }else{
+                alert("Answer is invalid. Select among the given options");
+                return null;
+              }
+            } else if(highlightRow == 5 && highlightColumn == 1){
+              answer = prompt("options: at 2f/beyond f/>f<2f");
+                if (answer.toLowerCase == "at 2f" || answer.toLowerCase() == "beyond f" || answer.toLowerCase() == ">f<2f"){
+                  return answer.toLowerCase();
+                }else{
+                  alert("Answer is invalid. Select among the given options");
+                  return null;
+                }
+              } else if(highlightRow == 5 && highlightColumn == 2){
+                answer = prompt("enlarged/diminished/same size");
+                  if (answer.toLowerCase() == "enlarged" || answer.toLowerCase() == "diminished" || answer.toLowerCase() == "same size"){
+                    return answer;
+                  }else{
+                    alert("Answer is invalid. Select among the given options");
+                    return null;
+                  }
+                } 
+  } 
 }
 
 function result(x,y) {
   console.log("Summary");
   switch (clickCount) {
     case 0:
+      controlsDM.deactivate();
       console.log("Inside result: step:"+step+" clickcount: "+clickCount)
-      camera.position.set(0, 0, 0.5);
-      camera.rotation.y = 0;
-      //camera.lookAt(new THREE.Vector3(0, 0, 0));
+      camera.copy(camera1, true);
       text = ["Results",
-      "Now it is time to note the results",
-      "of the observations.", 
+      "Now it is time to note the observations",
+      "", 
       "In the next step fill the empty cells", 
       "of the table with correct answers.",
       "",
@@ -1789,14 +1862,17 @@ function result(x,y) {
       drawCanvasText(text);
       texCanvas.needsUpdate = true;
       render();    
-      clickCount += 1;
+      if (intersects[0].object.name == "button2"){
+        clickCount +=1;
+        console.log("result: inside intersect: clickCount: "+clickCount)
+      }
     break;
     case 1:
       text = [
         "Obj. position",
         "Img. position",
         "Img. size",
-        "Obj. size",
+        "Nature of image",
         "< f",
         "object side",
         "",
@@ -1814,9 +1890,9 @@ function result(x,y) {
         "object size",
         "Real",
         ">2f",
-        ">f<2f",
         "",
         "",
+        "Real",
       ];
       var i, j;
       var count = 0;
@@ -1826,20 +1902,177 @@ function result(x,y) {
           count++;
         }
       }
+      highlightRow = 1;
+      highlightColumn = 2;
+      clickCount +=1;
       console.log("summary: Switch case 0");
-      drawCanvasTable(5, 3, "Result");
+      drawCanvasTable(5, 3, "Observations");
       texCanvas.needsUpdate = true;
       render();
-      if (intersects[0].object.name == "button2"){
-        clickCount +=1;
-      }
-      console.log("summary: after summary table");
       break;
-      case 3:
-
-
-
-  }
+      case 2:
+        var answer;
+      console.log("result: case3");
+      if(intersects[0].object.name == "tvscreen"){
+        if (x>-0.01 && x<0.46 && y>0.18 && y<0.28 && !answered[0]){
+          highlightRow = 1;
+          highlightColumn = 2;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == "enlarged"){
+              score += 1;
+              answered[0] = true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "Enlarged";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+        else if (x>0.5 && x<0.96 && y>0.18 && y<0.28 && !answered[1]){
+          highlightRow = 1;
+          highlightColumn = 3;
+          answer = getAnswer();
+          console.log("Virtal answer: "+answer)
+          if(answer != null){
+            if (answer == "virtual"){
+              score += 1;
+              answered[1]=true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "Virtual";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+        else if (x>-0.51 && x<-0.07 && y>0.06 && y<0.16 && !answered[2]){
+          highlightRow = 2;
+          highlightColumn = 1;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == "at infinity"){
+              score += 1;
+              answered[2] = true
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "at infinity";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+        else if (x>-0.53 && x<-0.045 && y>-0.081 && y<0.024 && !answered[3]){
+          highlightRow = 3;
+          highlightColumn = 1;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == "beyond f"){
+              score += 1;
+              answered[3]=true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "beyond f";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+        else if (x>0.48 && x<0.95 && y>-0.08 && y<0.028 && !answered[4]){
+          console.log("detected at 2f cell")
+          highlightRow = 3;
+          highlightColumn = 3;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == "real"){
+              score += 1;
+              answered[4]=true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "real";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }else if (x > -0.54 && x < -0.03 && y > -0.215 && y < -0.08 && !answered[5]){
+          highlightRow = 4;
+          highlightColumn = 1;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == "at 2f"){
+              score += 1;
+              answered[5]=true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "at 2f";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+        else if (x>-0.54 && x<-0.04 && y>-0.34 && y<-0.23 && !answered[6]){
+          highlightRow = 5;
+          highlightColumn = 1;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == ">f<2f"){
+              score += 1;
+              answered[6] = true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = ">f<2f";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+        else if (x>-0.021 && x<0.46 && y>-0.34 && y<-0.23 && !answered[7]){
+          highlightRow = 5;
+          highlightColumn = 2;
+          answer = getAnswer();
+          if(answer != null){
+            if (answer == "diminished"){
+              score += 1;
+              answered[7]=true;
+              alert("Answer is correct");
+              readings[highlightRow][highlightColumn] = "diminished";
+              drawCanvasTable(5, 3, "Observations");
+              texCanvas.needsUpdate = true;
+              render();
+            }else{
+              alert("Answer is wrong. Try again")
+            }
+          }
+        }
+      }else if (intersects[0].object.name == "button2"){
+        clickCount += 1;
+          text = ["Done!!!",
+          "You have successfully completed",
+          "the experiment",
+          "",
+          "Your score is: "+score+" out of 25",
+      ];
+          console.log("result: inside intersect: clickCount: "+clickCount)
+        drawCanvasText(text);
+      texCanvas.needsUpdate = true;
+      render(); 
+      }   
+}
 }
 function animate() {
   requestAnimationFrame(animate);

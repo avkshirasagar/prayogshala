@@ -42,7 +42,6 @@ var lObjectPositiony;
 var lObjectPositionz;
 var tex,
   texArray = [],
-  LenstexArray = [],
   CandlelineVertices = [],
   ToplineVertices = [];
 var positionAttribute;
@@ -149,10 +148,6 @@ function init() {
           objectScale = gltf.scene.getObjectByName("scale");
           objectLensHolder = gltf.scene.getObjectByName("lensHolder");
           objectFlame = gltf.scene.getObjectByName("flame");
-          objectTv = gltf.scene.getObjectByName("tv");
-          //lens material
-
-
           //console.log("x Position of flame: " + objectFlame.position.x);
           //textAim = ["Aim:", " To", " find", " the", " focal", " length", " of", " convex", " lens" ];
           var textAim = [
@@ -252,29 +247,6 @@ function init() {
           });
           console.log(gltf.scene);
           //console.log("scene after applying material" + gltf.scene);
-
-          var lens = ["lens1.png","lens_virtual.png"]
-          //lens material
-          for(var i=0; i<=1; i++){
-          var image = "./images/lens/" + lens[i];
-            tex = new TextureLoader().load(image);
-            tex.encoding = THREE.sRGBEncoding;
-            tex.flipY = false;
-            tex.needsUpdate = true;
-            LenstexArray[0] = tex;
-            //console.log("image: " + image);
-          }
-
-          //console.log("applying texture to sheet: " + image);
-
-          //tex.wrapS = tex.wrapT = THREE.repeatWrapping;
-          objectLens.material = new THREE.MeshBasicMaterial({
-            map: LenstexArray[0],
-            color: 0xffffff,
-            side: THREE.DoubleSide
-          });
-          objectLens.material.transparent = "true"
-          objectLens.material.opacity = 0.5;
 
           CandlelineVertices = new Float32Array([
             objectCandle.position.x,
@@ -463,6 +435,7 @@ function init() {
   controlsDM.deactivate();
   InitializeReadingCords(-4.51, 2.26);
 }
+
 function onTransitionEnd( event ) {
 
 	event.target.remove();
@@ -955,31 +928,21 @@ function proc3(x, y) {
       render();
       break;
       case 1:
-        //controls.enabled = true;
         if (intersects[0].object.name == "tvscreen"){
         if (x > -5.73 && x < 1.8 && y > -0.19 && y < 1.7) {
         if (y > 1.2 && y < 1.5) {
           score += 1;
         }
-        camera.position.set(3,-1,0);
-        objectTv.position.x -= 5;
-        objectTv.position.z -= 2;
-        objectTv.rotation.y += 90 * (Math.PI / 180);
-        //to add refraction
-        camera.rotation.y += 99 * (Math.PI / 180);
-        objectLens.material.map = LenstexArray[1];       
-        objectLens.material.opacity = 1;
-        objectBoard.visible = false;
           isAnswer = true;
             var text = [
               "Object less than f(10cms)",
               "When the candle is placed at a distance less than f,",
-              "a virual image image is formed on the same side",
-              "of the object as seen now.",
-              "Image NOT seen on the screen as it is NOT real",
-              "The image is virtual, erect and enlarged.",
-              "Hence a convex lens can be used as magnifying lens.",
-              "Click on arrow button to proceed further",
+              "a virtual image is formed on the same side of the object",
+              "Hence, here it is NOT seen on the screen",
+              "Image is NOT seen on the screen",
+              "Image is diminished",
+              "Image is of same height as that of object",
+              "Image is enlarged",
             ];
           clickCount += 1;
           drawCanvasQuiz(text, isAnswer, 4);
@@ -996,17 +959,6 @@ function proc3(x, y) {
     break;
     case 2:
       isAnswer = false;
-      objectTv.position.x += 5;
-      objectTv.position.z += 2;
-      objectTv.rotation.y -= 90 * (Math.PI / 180);
-      //to add refraction
-      camera.rotation.y -= 99 * (Math.PI / 180);
-      camera.near = 1;
-      camera.position.set(-4, 3, 7);
-      //camera.rotation.y -= 9 * (Math.PI / 180);
-      objectLens.material.map = LenstexArray[0];
-      objectlensStand.material.opacity = 0.5;
-      objectBoard.visible = true;
       if (intersects.length > 0) {
         if (intersects[0].object.name == "button2") {
           var text = [

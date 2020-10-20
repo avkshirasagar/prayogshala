@@ -740,20 +740,21 @@ function proc1(x, y) {
       topLine.visible = false;
       Candleline.visible = true;
       Lensline.visible = true;
-      controlsDM.deactivate();
+      controlsDM.activate();
       console.log("Proc1:case 0: step: " + step + " clickCount: " + clickCount);
       step += 1;
       clickCount += 1;
       console.log("Proc1:case 0: step: " + step + " clickCount: " + clickCount);
       text = [
         "Finding Focal Length",
+        "In the next step:",
         "1. Move candle at a position where image is seen",
         "2. Move the board till a sharp image is seen.",
         "3. Input object distance and image distance",
         "by clicking on the cell in the table",
         "5. Calculate the focal length using formula",
         "6. Input focal length in the table",
-        "Click on arrow button to take readings",
+        "         Click on arrow button to take readings",
       ];
       camera.near = 1;
       camera.position.set(-4, 3, 7);

@@ -497,7 +497,8 @@ function apparatus(aparatus) {
       ];
       clickCount += 1;
       text = textStep.slice(0, 4);
-      camera.position.set(0, 5, 8.5);
+      //camera.position.set(0, 5, 8.5);
+      camera.position.set(0, 5, 10);
       break;
     case 1:
       if (aparatus == "candle") {

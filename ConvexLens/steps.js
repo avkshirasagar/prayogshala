@@ -1,12 +1,12 @@
-import * as THREE from "https://unpkg.com/three@0.120.1/build/three.module.js";
+import * as THREE from "./three/build/three.module.js";
 
-import { OrbitControls } from "https://unpkg.com/three@0.120.1/examples/jsm/controls/OrbitControls.js";
-import { DragControls } from "https://unpkg.com/three@0.120.1/examples/jsm/controls/DragControls.js";
-import { GLTFLoader } from "https://unpkg.com/three@0.120.1/examples/jsm/loaders/GLTFLoader.js";
-import { RGBELoader } from "https://unpkg.com/three@0.120.1/examples/jsm/loaders/RGBELoader.js";
-import { RoughnessMipmapper } from "https://unpkg.com/three@0.120.1/examples/jsm/utils/RoughnessMipmapper.js";
-import { TextureLoader } from "https://unpkg.com/three@0.120.1/src/loaders/TextureLoader.js";
-import { Line } from "https://unpkg.com/three@0.120.1/src/objects/Line.js";
+import { OrbitControls } from "./three/examples/jsm/controls/OrbitControls.js";
+import { DragControls } from "./three/examples/jsm/controls/DragControls.js";
+import { GLTFLoader } from "./three/examples/jsm/loaders/GLTFLoader.js";
+import { RGBELoader } from "./three/examples/jsm/loaders/RGBELoader.js";
+import { RoughnessMipmapper } from "./three/examples/jsm/utils/RoughnessMipmapper.js";
+import { TextureLoader } from "./three/src/loaders/TextureLoader.js";
+
 
 var container, controls, controlsDM;
 var camera, scene, renderer, gltf, camera1;

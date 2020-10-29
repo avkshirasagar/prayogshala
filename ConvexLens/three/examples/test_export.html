@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Export test</title>
+    <link rel="stylesheet" href="main.css"
+  </head>
+  <body>
+    <script src="./node_modules/three/build/three.js"></script>
+    <script type="module">
+      import * as THREE from "./node_modules/three/build/three.module.js";
+      import { MTLLoader } from "./node_modules/three/examples/jsm/loaders/MTLLoader.js";
+      import { OBJLoader } from "./node_modules/three/examples/jsm/loaders/OBJLoader.js";
+
+      // Create scene
+      var scene = new THREE.Scene();
+
+      //Create perspective camera
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.z = 25;
+
+      //Create full screen webGL renderer
+      var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setClearColor("#DDDDDD");
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      //Responsive
+
+      window.addEventListener("resize", () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectMatrix();
+      });
+
+      //Add light
+      var light = new THREE.PointLight(0xffffff, 1.4, 1000);
+      light.position.set = (0, 15, 15);
+      scene.add(light);
+
+      //Defining variables for model
+      var ourObj1;
+
+      //Create Material
+      var mtlLoader = new MTLLoader();
+      mtlLoader.load("models/obj/test/test.mtl", function (materials) {
+        materials.preload();
+
+        //Load Object
+        var objLoader = new OBJLoader();
+        objLoader.setMaterials(materials);
+        objLoader.load("./images/design/test.obj", function (object) {
+          scene.add(object);
+        });
+      });
+
+      var render = function () {
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
+      };
+
+      render();
+    </script>
+  </body>
+</html>

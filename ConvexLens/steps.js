@@ -7,7 +7,6 @@ import { RGBELoader } from "./three/examples/jsm/loaders/RGBELoader.js";
 import { RoughnessMipmapper } from "./three/examples/jsm/utils/RoughnessMipmapper.js";
 import { TextureLoader } from "./three/src/loaders/TextureLoader.js";
 
-
 var container, controls, controlsDM;
 var camera, scene, renderer, gltf, camera1;
 var objects = [];
@@ -24,10 +23,12 @@ var objectScale;
 var objectLens;
 var objectButton1;
 var objectButton2;
+var hintSprite;
 var centerLine;
 var topLine;
+var arrow;
 var score;
-var step = 1;
+var step = 0;
 var clickCount;
 var intersects = [];
 var lmousex;
@@ -58,6 +59,7 @@ var texCanvas;
 var readings = [];
 var highlightRow = 1;
 var highlightColumn = 0;
+var hintTaken = false;
 var getReading = false;
 var doneFlag = false;
 var redoFlag = false;
@@ -67,6 +69,9 @@ var answered = [false,false,false,false,false,false,false]
 
 var canvasScreen = document.createElement("canvas");
 var ctx = canvasScreen.getContext("2d");
+var canvasSprite = document.createElement("canvas");
+var ctxSprite = canvasSprite.getContext("2d");
+var SpriteCanvasTexture;
 
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
@@ -156,18 +161,17 @@ function init() {
           //console.log("x Position of flame: " + objectFlame.position.x);
           //textAim = ["Aim:", " To", " find", " the", " focal", " length", " of", " convex", " lens" ];
           var textAim = [
-            "Aim",
-            "1) To study nature and size of image",
-            "of an object formed by convex lens.",
+            "Instructions",
+            "\u261E At every step, read the instructions carefully.",
+            "\u261E For every correct answer, you will be given a score.",
+            "\u261E For hint, click on the \u2753 symbol",
+            "If you use a hint, you will not be awarded with a",
+            "score for that question.",
             "",
-            "2) To find image distance for varying",
-            "object distances from the convex lens.",
-            "",
-            "3) To find focal length of convex lens",
-            "     Click on the -> button to proceed.",
+            "To start the experiment, click on the arrow button"
           ];
 
-          drawCanvasText(textAim, 15);
+          drawCanvasText(textAim, 12);
 
           // canvas contents will be used for a texture
           texCanvas = new THREE.CanvasTexture(ctx.canvas);
@@ -365,6 +369,27 @@ function init() {
           Lensline = new THREE.Line(LenslineGeometry, lineMaterial);
           centerLine = new THREE.Line(CenterlineGeometry, lineMaterial);
           topLine = new THREE.Line(ToplineGeometry, lineMaterial);
+
+          //HintSprite
+          drawHintText("Hello");
+          SpriteCanvasTexture = new THREE.Texture(canvasSprite);
+          //SpriteCanvasTexture.encoding = THREE.sRGBEncoding;
+          //SpriteCanvasTexture.flipY = false;
+          SpriteCanvasTexture.needsUpdate = true;
+          var spriteMaterial = new THREE.SpriteMaterial({
+            map: SpriteCanvasTexture,
+            color: 0xffffff,
+          })
+          hintSprite = new THREE.Sprite(spriteMaterial);
+          hintSprite.scale.set(2, 1, 1);
+          hintSprite.position.set(-5,0,-5);
+          hintSprite.visible = false;
+          //Add Arrow helper
+          var sourcePos = new THREE.Vector3(objectCandle.position.x - 5, objectCandle.position.y, objectCandle.position.z);
+          var targetPos = new THREE.Vector3(objectCandle.position.x, objectCandle.position.y, objectCandle.position.z);
+          var direction = new THREE.Vector3().subVectors(targetPos, sourcePos);
+          arrow = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, direction.length(), 0x00ff00);
+          arrow.visible = false;
           centerLine.visible = false;
           topLine.visible = false;
           Candleline.visible = true;
@@ -374,31 +399,18 @@ function init() {
           gltf.scene.add(Lensline);
           gltf.scene.add(centerLine);
           gltf.scene.add(topLine);
+          gltf.scene.add(arrow)
+          gltf.scene.add(hintSprite);
           //scene.add(spr);
           //gltf.scene.position.set(0, -1, -17);
           gltf.scene.position.set(0, -5, 0);
           scene.add(gltf.scene);
 
-          //Add Axis helper
-          //var axesHelper = new THREE.AxesHelper(5);
-          //scene.add(axesHelper);
 
-          //Add image object
-          var Cgeometry = new THREE.CircleGeometry(1, 32);
-          var Cmaterial = new THREE.MeshBasicMaterial({
-            color: 0xffff00,
-            transparent: true,
-          });
-          Cmaterial.opacity = 1;
-          var sImage = new THREE.Mesh(Cgeometry, Cmaterial);
-          //objects.push(objectFlame);
+
           objects.push(objectCandle);
           objects.push(objectBoard);
           objects.push(objectSheet);
-          //objects.push(group);
-          //console.log("object to be dragged" + sImage);
-
-          //scene.add(sImage);
 
           roughnessMipmapper.dispose();
 
@@ -477,11 +489,11 @@ function apparatus(aparatus) {
         "Apparatus",
         "Identify the apparatus:",
         "(Click on the apparatus mentioned below)",
-        "1. Candle",
-        "2. Board with white sheet paper",
-        "3. Measuring scale",
-        "4. Convex Lens",
-        "5. Convex Lens stand",
+        "1. Candle  \u2753",
+        "2. Board with white sheet paper  \u2753",
+        "3. Measuring scale  \u2753",
+        "4. Convex Lens  \u2753",
+        "5. Convex Lens stand  \u2753",
       ];
       clickCount += 1;
       text = textStep.slice(0, 4);
@@ -490,29 +502,73 @@ function apparatus(aparatus) {
     case 1:
       if (aparatus == "candle") {
         text = textStep.slice(0, 5);
-        score += 1;
         clickCount += 1;
+        if(!hintTaken){
+        score += 1;
+        }else{
+        hintTaken = false;
+        arrow.visible = false;
+        hintSprite.visible = false;
+        }
+      }
+      else if(aparatus == "tvscreen"){
+        console.log("Inside apparatus, tvscreen")
+        showHint();
+        hintTaken=true;
       }
       break;
     case 2:
       if (aparatus == "board") {
         text = textStep.slice(0, 6);
-        score += 1;
         clickCount += 1;
+        if(!hintTaken){
+          score += 1;
+        }else{
+          hintTaken = false;
+          arrow.visible = false;
+          hintSprite.visible = false;
+      }
+    }
+      else if(aparatus == "tvscreen"){
+        console.log("Inside apparatus, tvscreen")
+        showHint();
+        hintTaken=true;
       }
       break;
     case 3:
       if (aparatus == "scale") {
         text = textStep.slice(0, 7);
-        score += 1;
         clickCount += 1;
+        if(!hintTaken){
+          score += 1;
+        }else {
+          hintTaken = false;
+          arrow.visible = false;
+          hintSprite.visible = false;
+      }
+    }
+      else if(aparatus == "tvscreen"){
+        console.log("Inside apparatus, tvscreen")
+        showHint();
+        hintTaken=true;
       }
       break;
     case 4:
       if (aparatus == "lens") {
         text = textStep.slice(0, 8);
-        score += 1;
         clickCount += 1;
+        if(!hintTaken){
+          score += 1;
+        }else{
+          hintTaken = false;
+          arrow.visible = false;
+          hintSprite.visible = false;
+      }
+    }
+      else if(aparatus == "tvscreen"){
+        console.log("Inside apparatus, tvscreen")
+        showHint();
+        hintTaken=true;
       }
       break;
     case 5:
@@ -526,8 +582,19 @@ function apparatus(aparatus) {
           "Please click on the arrow button to",
           "proceed to setup",
         ];
-        score += 1;
         clickCount += 1;
+        if(!hintTaken){
+          score += 1;
+        }else{
+          hintTaken = false;
+          arrow.visible = false;
+          hintSprite.visible = false;
+      }
+    }
+      else if(aparatus == "tvscreen"){
+        console.log("Inside apparatus, tvscreen")
+        showHint();
+        hintTaken=true;
       }
       break;
     case 6:
@@ -539,14 +606,15 @@ function apparatus(aparatus) {
   }
   drawCanvasText(text, 15);
   texCanvas.needsUpdate = true;
+  SpriteCanvasTexture.needsUpdate = true;
   render();
 }
 
-function setup1() {
+function setup1(aparatus) {
   controlsDM.activate();
 
   console.log("setup1:step: " + step);
-
+if(clickCount == 0){
   text = [
     "Setup",
     "1. Make sure the candle, lens stand",
@@ -555,7 +623,7 @@ function setup1() {
     "Drag the candle backward and forward",
     "to keep in correct position.",
     "Your score will increment if you place the",
-    "candle in correct position",
+    "candle in correct position  \u2753",
   ];
   centerLine.visible = true;
   //clickCount = 5;
@@ -564,7 +632,19 @@ function setup1() {
   //canvasText(text);
   drawCanvasText(text, 15);
   texCanvas.needsUpdate = true;
+  clickCount += 1;
   render();
+}
+else if (clickCount > 0){ 
+  if(aparatus == "tvscreen"){
+    arrow.visible = true;
+    hintSprite.visible = true;
+    console.log("Inside apparatus, tvscreen")
+    showHint();
+    hintTaken=true;
+    render();
+  }
+}
 }
 
 function onTouch(event) {
@@ -620,7 +700,19 @@ function onClick(event) {
   ];
   intersects = raycaster.intersectObjects(intersectionObjects, true);
   console.log("OnClick: Checking step: " + step);
-  if (step == 1) {
+  if (step == 0) {
+    if (intersects.length > 0) {
+      /*console.log(
+        "step1: intersect[0] object name: " + intersects[0].object.name
+      );
+      console.log("object clicked: " + intersects[0].object.name);*/
+      if (intersects[0].object.name == "button2") {
+        clickCount = 0;
+        step += 1;
+        aim();
+      }
+    }
+   } else if (step == 1) {
     if (intersects.length > 0) {
       /*console.log(
         "step1: intersect[0] object name: " + intersects[0].object.name
@@ -640,6 +732,8 @@ function onClick(event) {
         intersects[0].object.name
     );*/
     apparatus(intersects[0].object.name);
+  } else if (step == 3) {
+    setup1(intersects[0].object.name);
   } else if (step == 4) {
     setup2(intersects[0].object.name);
   } else if (step == 5) {
@@ -657,9 +751,28 @@ function onClick(event) {
   }
 }
 
+function aim(){
+  var textAim = [
+    "Aim",
+    "1) To study nature and size of image",
+    "of an object formed by convex lens.",
+    "",
+    "2) To find image distance for varying",
+    "object distances from the convex lens.",
+    "",
+    "3) To find focal length of convex lens",
+    "     Click on the -> button to proceed.",
+  ];
+  drawCanvasText(textAim, 15);
+  texCanvas.needsUpdate = true;
+  render();
+}
+
 function setup2(clickedObject) {
   switch (clickCount) {
     case 0:
+      hintSprite.visible = false;
+      arrow.visible = false;
       step += 1;
       clickCount += 1;
       /*console.log(
@@ -675,7 +788,7 @@ function setup2(clickedObject) {
         "should lie in straight line and parallel",
         "to the measuring scale",
         "Click on lens stand to adjust the height",
-        "of the lens stand",
+        "of the lens stand \u2753",
       ];
       centerLine.visible = false;
       topLine.visible = true;
@@ -686,7 +799,14 @@ function setup2(clickedObject) {
       render();
       break;
     case 1:
-      if (clickedObject == "lensStand") {
+      if(clickedObject == "tvscreen"){
+        hintSprite.visible = true;
+        arrow.visible = true;
+        showHint();
+        hintTaken = true;
+        SpriteCanvasTexture.needsUpdate = true;
+        render();
+      }else if (clickedObject == "lensStand") {
         console.log("Step4 inside lens stand: " + clickedObject);
         objectlensStand.scale.y = 0.349;
         objectlensStand.position.set(-0.0377, 2.3972, 0);
@@ -708,8 +828,13 @@ function setup2(clickedObject) {
         ToplineGeometry.setAttribute("position", TopLinepositionAttribute);
         ToplineGeometry.computeBoundingSphere();
         TopLinepositionAttribute.needsUpdate = true;
-
+        if (hintTaken){
+          hintTaken = false;
+          hintSprite.visible = false;
+        }  
+        else{
         score += 1;
+        }
         clickCount += 1;
         text = [
           "Setup",
@@ -720,6 +845,8 @@ function setup2(clickedObject) {
           "",
           "Now, click on arrow button to proceed",
         ];
+        hintSprite.visible = false;
+        arrow.visible = false;
       }
       drawCanvasText(text, 15);
       texCanvas.needsUpdate = true;
@@ -797,7 +924,12 @@ function proc1(x, y) {
         var y_max;
         var i, j;
         console.log("Received Co-ords: x=" + x + ", y=" + y);
+        if (x>-5.7 && x<1.7 && y > 2.5 && y < 2.9){
+          showHint(x,y)
+        }
+        else {
         (function () {
+          arrow.visible = false;
           for (i = 0; i <= 4; i++) {
             for (j = 0; j <= 2; j++) {
               if (readingCords[i][j][0] < 0) {
@@ -840,13 +972,15 @@ function proc1(x, y) {
             }
           }
         })();
-      } else if (intersects[0].object.name == "button2") {
+      }
+    } else if (intersects[0].object.name == "button2") {
         console.log("Proc1: button2: step: "+ step+" clockcount= "+clickCount)
         clickCount = 0;
         step += 1;
+        arrow.visible = false;
         proc2();
-      }
-  }
+      }  
+}
 }
 
 function proc2(x, y) {
@@ -1220,9 +1354,9 @@ function initializeReadingArray() {
     readings[i] = new Array(3);
   }
 
-  readings[0][0] = "Object position";
-  readings[0][1] = "Image distance";
-  readings[0][2] = "focal length";
+  readings[0][0] = "Object position \u2753";
+  readings[0][1] = "Image distance \u2753";
+  readings[0][2] = "focal length \u2753";
 
   for (i = 1; i <= 5; i++) {
     for (j = 0; j <= 2; j++) {
@@ -1287,7 +1421,11 @@ function onDragEvent(e) {
         objectCandle.position.z = 0.6;
         objectFlame.position.z = 0.6;
       } else if ((e.object.position.z > -0.03) & (e.object.position.z < 0.02)) {
+        if(hintTaken){
+          hintTaken = false;
+        } else{
         score += 1;
+        }
         objectSheet.material.map = texArray[0];
         objectCandle.position.z = 0;
         objectFlame.position.z = 0;
@@ -1536,6 +1674,124 @@ function updateLineVertices(position) {
   CandlelineGeometry.computeBoundingSphere();
 }
 
+function drawHintText(message, fontSize){
+  console.log("drawHintText: step: "+step+"message: "+message)
+  var x = 5;
+  var y = 5;
+  ctxSprite.fillStyle = "white";
+  ctxSprite.fillRect(0, 0, canvasSprite.width, canvasSprite.height);
+  ctxSprite.strokeStyle = "black";
+  ctxSprite.fillStyle = "black";
+  ctxSprite.lineWidth = 10;
+  ctxSprite.font = " Bold "+ fontSize +"px "+ "segoe UI";
+  ctxSprite.strokeRect(0, 0, canvasSprite.width, canvasSprite.height);
+  ctxSprite.textBaseline = "middle";
+  ctxSprite.textAlign = "start";
+  ctxSprite.fillText(message, 5, canvasSprite.height/2);
+}
+function showHint(x,y){
+  //controls.enabled = true;
+  console.log("clickCount: "+clickCount+ " step:"+step);
+  var newSourcePos;
+  var newTargetPos;
+  if(step == 2){
+    var message = "Click";
+    if(clickCount==1){
+    console.log("inside candle hint")
+    hintSprite.position.set(objectCandle.position.x-3, objectCandle.position.y, objectCandle.position.z);
+    newSourcePos = new THREE.Vector3(objectCandle.position.x - 2, objectCandle.position.y, objectCandle.position.z);
+    newTargetPos = new THREE.Vector3(objectCandle.position.x, objectCandle.position.y, objectCandle.position.z);
+    }
+    else if(clickCount==2){
+      console.log("inside board")
+      hintSprite.position.set(objectBoard.position.x-2, objectBoard.position.y, objectBoard.position.z);
+      newSourcePos = new THREE.Vector3(objectBoard.position.x - 2, objectBoard.position.y, objectBoard.position.z);
+      newTargetPos = new THREE.Vector3(objectBoard.position.x, objectBoard.position.y, objectBoard.position.z);
+    }
+    else if(clickCount==3){
+      console.log("inside measuring scale")
+      hintSprite.position.set(objectScale.position.x-1, objectScale.position.y+2, objectScale.position.z);
+      newSourcePos = new THREE.Vector3(objectScale.position.x-1, objectScale.position.y+2, objectScale.position.z);
+      newTargetPos = new THREE.Vector3(objectScale.position.x-1, objectScale.position.y, objectScale.position.z);
+    }
+    else if(clickCount==4){
+      console.log("inside lens")
+      hintSprite.position.set(objectLens.position.x-4, objectLens.position.y, objectLens.position.z);
+      newSourcePos = new THREE.Vector3(objectLens.position.x - 5, objectLens.position.y, objectLens.position.z);
+      newTargetPos = new THREE.Vector3(objectLens.position.x, objectLens.position.y, objectLens.position.z);
+    }
+    else if(clickCount == 5){
+      console.log("inside lens holder")
+      hintSprite.position.set(objectlensStand.position.x-2, objectlensStand.position.y, objectlensStand.position.z);
+      newSourcePos = new THREE.Vector3(objectlensStand.position.x - 2, objectlensStand.position.y, objectlensStand.position.z);
+      newTargetPos = new THREE.Vector3(objectlensStand.position.x, objectlensStand.position.y, objectlensStand.position.z);
+    }
+    arrow.position.copy(newSourcePos);
+    var direction = new THREE.Vector3().subVectors(newTargetPos, newSourcePos);
+    arrow.setLength(direction.length());
+    arrow.setDirection(direction.normalize());  
+    console.log(arrow);
+    arrow.visible = true;
+    drawHintText(message, 90);
+    hintSprite.visible = true;
+  } else if (step==3){
+    var message = "Drag";
+    if(clickCount>0){
+    console.log("inside candle hint")
+    hintSprite.position.set(objectCandle.position.x-2, objectCandle.position.y, objectCandle.position.z);
+    newSourcePos = new THREE.Vector3(CandlelineVertices[0]-0.5, CandlelineVertices[1], CandlelineVertices[2]);
+    newTargetPos = new THREE.Vector3(CandlelineVertices[0]-0.5, CandlelineVertices[4], CandlelineVertices[5]);
+    }
+    arrow.position.copy(newSourcePos);
+    var direction = new THREE.Vector3().subVectors(newTargetPos, newSourcePos);
+    arrow.setLength(direction.length());
+    arrow.setDirection(direction.normalize());  
+    console.log(arrow);
+    arrow.visible = true;
+    drawHintText(message,90);
+    hintSprite.visible = true;
+  } else if (step==4){
+    var message = "Click";
+    if(clickCount==1){
+      console.log("inside candle hint")
+      hintSprite.position.set(objectlensStand.position.x-1, objectlensStand.position.y, objectlensStand.position.z+1);
+      newSourcePos = new THREE.Vector3(objectlensStand.position.x - 2, objectlensStand.position.y, objectlensStand.position.z);
+      newTargetPos = new THREE.Vector3(objectlensStand.position.x, objectlensStand.position.y, objectlensStand.position.z);
+      }
+      arrow.position.copy(newSourcePos);
+      var direction = new THREE.Vector3().subVectors(newTargetPos, newSourcePos);
+      arrow.setLength(direction.length());
+      arrow.setDirection(direction.normalize());  
+      console.log(arrow);
+      arrow.visible = true;
+      drawHintText(message,90);
+      hintSprite.visible = true;
+  } else if(step == 5){
+    if (clickCount == 2){ 
+      if(x>-5.7 && x <-3.2 && y > 2.5 && y < 2.9){
+        newSourcePos = new THREE.Vector3(objectCandle.position.x, objectCandle.position.y-0.2, objectCandle.position.z+1);
+        newTargetPos = new THREE.Vector3(objectlensStand.position.x, objectCandle.position.y-0.2, objectCandle.position.z+1);
+        alert("Object distance = lens distance - candle distance")
+      }
+      else if (x >-3.1 && x < -0.7 && y > 2.5 && y < 2.9){
+        alert("Image distance = lens distance + board distance")
+        newSourcePos = new THREE.Vector3(objectlensStand.position.x, objectlensStand.position.y-0.2, objectlensStand.position.z+1);
+        newTargetPos = new THREE.Vector3(objectBoard.position.x-0.4, objectlensStand.position.y-0.2, objectlensStand.position.z+1);
+      }
+      else if (x > -0.6 && x < 1.7 && y > 2.5 && y < 2.9){
+        alert("1/f=1/v-1/u  (object distance is taken as -ve as object is on the left side of the lens)")
+      }   
+      arrow.position.copy(newSourcePos);
+      var direction = new THREE.Vector3().subVectors(newTargetPos, newSourcePos);
+      arrow.setLength(direction.length());
+      arrow.setDirection(direction.normalize());  
+      console.log(arrow);
+      arrow.visible = true;
+      render();  
+    } 
+  }
+}
+
 function drawCanvasQuiz(text, isAnswer, AnswerRow) {
   var i, j;
   var x = 5;
@@ -1690,14 +1946,14 @@ function drawCanvasCalcs(answer) {
     var text2 = "Click on the box and enter the f.l.";
   }
   else if (clickCount == 1) {
-      if (answer >= 9 && answer <= 11) {
-        if(answer == fl){
+      if (answer >= 9.1 && answer <= 10.9) {
+        if(answer > fl - 0.1 || answer < fl+0.1){
         score += 1;
         doneFlag = true;
         ctx.fillStyle = "green";
         text1 = "The calculated Focal length is " + answer;
         text2 = "Click the arrow button to proceed further"; 
-      } else if (answer != fl){
+      } else{
         ctx.fillStyle = "red";
         text1 = "The calculation is not correct check again";
         text2 = "Recalculate and enter value again";
@@ -1824,7 +2080,9 @@ function getAnswer() {
       alert("focal length calculation may be wrong. Please recheck");
       return null;
     } else {
-      score += 1;
+      if(highlightColumn == 2){
+        score += 1;
+      }
       return answer;
     }
   }

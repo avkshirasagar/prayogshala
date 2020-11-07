@@ -1358,10 +1358,12 @@ function initializeReadingArray() {
   readings[0][0] = "Object position \u2753";
   readings[0][1] = "Image distance \u2753";
   readings[0][2] = "focal length \u2753";
+  readings[0][3] = "scoreUpdated"
 
   for (i = 1; i <= 5; i++) {
     for (j = 0; j <= 2; j++) {
       readings[i][j] = "0";
+      readings[i][j+1] = false;
     }
   }
   for (i = 0; i <= 4; i++) {
@@ -1775,7 +1777,9 @@ function showHint(x,y){
         alert("Object distance = lens distance - candle distance")
       }
       else if (x >-3.1 && x < -0.7 && y > 2.5 && y < 2.9){
-        alert("Image distance = lens distance + board distance")
+        var msg = "Image distance = board distance - lens distance"
+        msg = msg.concat("\nImage distance = board distance - 50")
+        alert(msg)
         newSourcePos = new THREE.Vector3(objectlensStand.position.x, objectlensStand.position.y-0.2, objectlensStand.position.z+1);
         newTargetPos = new THREE.Vector3(objectBoard.position.x-0.4, objectlensStand.position.y-0.2, objectlensStand.position.z+1);
       }
@@ -2082,7 +2086,10 @@ function getAnswer() {
       return null;
     } else {
       if(highlightColumn == 2){
-        score += 1;
+        if(readings[highlightRow][highlightColumn+1] == false){
+          score += 1;
+          readings[highlightRow][highlightColumn+1] = true;
+        }
       }
       return answer;
     }
@@ -2093,7 +2100,7 @@ function getAnswer() {
       alert("Only numbers allowed");
       return null;
     } else if (answer.length > 4) {
-      alert("Only 4 characters allowed");
+      alert("Only 4 characters allowed.");
       return null;
     } else {
       return answer;

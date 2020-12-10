@@ -133,7 +133,7 @@ function init() {
 
       var loader = new GLTFLoader().setPath("");
       loader.load(
-        "convex_lens_flame.gltf",
+        "convex_simple_table.gltf",
         function (gltf) {
           gltf.scene.traverse(function (child) {
             if (child.isMesh) {

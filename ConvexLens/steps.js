@@ -112,25 +112,28 @@ function init() {
 		
 	} );
 
+  console.time("equirectangular load")
   new RGBELoader(loadingManager)
     .setDataType(THREE.UnsignedByteType)
     .setPath("images/")
     .load("equirectangular_room.hdr", function (texture) {
       var envMap = pmremGenerator.fromEquirectangular(texture).texture;
-
+  
       scene.background = envMap;
       scene.environment = envMap;
 
       texture.dispose();
       pmremGenerator.dispose();
-
+      
       //render();
 
       // model
 
       // use of RoughnessMipmapper is optional
       var roughnessMipmapper = new RoughnessMipmapper(renderer);
+      console.timeEnd("equirectangular load")
 
+      console.time("GLTF loader")
       var loader = new GLTFLoader().setPath("");
       loader.load(
         "convex_simple_table.gltf",
@@ -141,6 +144,7 @@ function init() {
               roughnessMipmapper.generateMipmaps(child.material);
             }
           });
+          console.timeEnd("GLTF loader")
           console.log(gltf.scene);
           //Moving single object (candle)
           objectCandle = gltf.scene.getObjectByName("candle");
@@ -170,8 +174,9 @@ function init() {
             "",
             "To start the experiment, click on the arrow button"
           ];
-
+          console.time("DrawTextCanvas")
           drawCanvasText(textAim, 12);
+          console.timeEnd("DrawTextCanvas")
 
           // canvas contents will be used for a texture
           texCanvas = new THREE.CanvasTexture(ctx.canvas);
@@ -208,7 +213,9 @@ function init() {
           var canvasProceed = document.createElement("canvas");
           var ctxProceed = canvasProceed.getContext("2d");
           //Draw Proceed icon on canvas
+          console.time("DrawCanvasProceedbutton")
           drawCanvasProceed(canvasProceed, ctxProceed);
+          console.timeEnd("DrawCanvasProceedbutton");
           var texProceed = new THREE.CanvasTexture(ctxProceed.canvas);
           texProceed.encoding = THREE.sRGBEncoding;
           texProceed.flipY = false;
@@ -236,6 +243,7 @@ function init() {
             "flame10.png",
             "flame11.png",
           ];
+          console.time("CandleImageTextureLoad")
           for (var i = 0; i <= 11; i++) {
             var image = "./images/flame/" + flameImages[i];
             tex = new TextureLoader().load(image);
@@ -245,7 +253,7 @@ function init() {
             texArray[i] = tex;
             //console.log("image: " + image);
           }
-
+          console.timeEnd("CandleImageTextureLoad");
           //console.log("applying texture to sheet: " + image);
 
           //tex.wrapS = tex.wrapT = THREE.repeatWrapping;
@@ -259,6 +267,7 @@ function init() {
 
           var lens = ["lens1.png","lens_virtual.png"]
           //lens material
+          console.time("LensTextureLoad")
           for(var i=0; i<=1; i++){
           var image = "./images/lens/" + lens[i];
             tex = new TextureLoader().load(image);
@@ -268,7 +277,7 @@ function init() {
             LenstexArray[0] = tex;
             //console.log("image: " + image);
           }
-
+          console.timeEnd("LensTextureLoad")
           //console.log("applying texture to sheet: " + image);
 
           //tex.wrapS = tex.wrapT = THREE.repeatWrapping;
@@ -412,8 +421,8 @@ function init() {
           objects.push(objectBoard);
           objects.push(objectSheet);
 
-          roughnessMipmapper.dispose();
-
+          //roughnessMipmapper.dispose();
+          
           render();
         },
         function () {}, // onProgress function
@@ -422,6 +431,7 @@ function init() {
         } // no error gets logged
       );
     });
+
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputEncoding = THREE.sRGBEncoding;

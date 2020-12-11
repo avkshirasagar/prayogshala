@@ -124,7 +124,7 @@ function init() {
       texture.dispose();
       pmremGenerator.dispose();
 
-      render();
+      //render();
 
       // model
 
